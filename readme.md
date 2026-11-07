@@ -2,13 +2,13 @@
 
 Dieses Repository enthält einen Lutris-Installer für die Windows-Version von Zwift. Zwift läuft im Lutris-Runner **wine** mit dem Wine-Build **dw-proton**; ein systemweit installiertes Wine ist nicht nötig. Lutris lädt dw-proton bei Bedarf selbst und startet es über umu. Das Startprogramm `ZwiftStart.exe` übernimmt Update, Vollbild-Voreinstellung und den eigentlichen Spielstart.
 
-Quellen: [GitLab](https://gitlab.metaccount.de/multimedia/zwift) (Hauptrepository) · [GitHub](https://github.com/smoebody/lutris-zwift) (Spiegel) · Downloads: [smoebody.github.io/lutris-zwift](https://smoebody.github.io/lutris-zwift/)
+Quellen: [GitLab](https://gitlab.metaccount.de/multimedia/lutris-zwift) (Hauptrepository) · [GitHub](https://github.com/smoebody/lutris-zwift) (Spiegel) · Downloads: [smoebody.github.io/lutris-zwift](https://smoebody.github.io/lutris-zwift/)
 
 ## Dateien
 
 | Datei | Zweck |
 |---|---|
-| [zwift-lutris.yml](zwift-lutris.yml) | Lutris-Installer (Runner `wine`, dw-proton); lädt `ZwiftSetup.exe` vom Zwift-CDN und `ZwiftStart.exe` aus dem GitHub-Release |
+| [lutris-zwift.yml](lutris-zwift.yml) | Lutris-Installer (Runner `wine`, dw-proton); lädt `ZwiftSetup.exe` vom Zwift-CDN und `ZwiftStart.exe` aus dem GitHub-Release |
 | [ZwiftStart.cs](ZwiftStart.cs) | Quelltext des Startprogramms im Zwift-Verzeichnis |
 | [agents.md](agents.md) | Technische Pfade, Wartungsregeln und Prüfbefehle |
 | [.gitlab-ci.yml](.gitlab-ci.yml) | GitLab-CI: übersetzt `ZwiftStart.exe`, veröffentlicht Pakete, Releases und die Projektseite |
@@ -25,9 +25,9 @@ Die Windows-Programmdateien, das Wine-Präfix, Zugangsdaten und Logs sind nicht 
 
 ## Installation über Lutris
 
-Die englische Anleitung mit Fehlerbehebung steht auf der Projektseite: <https://smoebody.github.io/lutris-zwift/> (dort auch der Download von `zwift-lutris.yml`).
+Die englische Anleitung mit Fehlerbehebung steht auf der Projektseite: <https://smoebody.github.io/lutris-zwift/> (dort auch der Download von `lutris-zwift.yml`).
 
-1. In Lutris **+ → Install from a local install script** („Installiere von einem lokalen Installationsskript“) wählen und [zwift-lutris.yml](zwift-lutris.yml) öffnen.
+1. In Lutris **+ → Install from a local install script** („Installiere von einem lokalen Installationsskript“) wählen und [lutris-zwift.yml](lutris-zwift.yml) öffnen.
 2. Als Ziel ein **neues, leeres Verzeichnis** wählen.
 3. Nach der Installation den Eintrag **Zwift** starten. Er steht unter dem Runner **Wine**.
 
@@ -81,11 +81,11 @@ Der Installer lädt `ZwiftStart.exe` aus dem GitHub-Release, weil GitLab nicht �
    git tag -s release/X.Y.Z -m "ZwiftStart X.Y.Z"
    git push origin release/X.Y.Z
    ```
-2. In [zwift-lutris.yml](zwift-lutris.yml) URL und `checksum` auf die SHA-256 aus `ZwiftStart.exe.sha256` des GitHub-Releases umstellen. Mono übersetzt nicht reproduzierbar; GitLab und GitHub liefern also unterschiedliche Dateien.
+2. In [lutris-zwift.yml](lutris-zwift.yml) URL und `checksum` auf die SHA-256 aus `ZwiftStart.exe.sha256` des GitHub-Releases umstellen. Mono übersetzt nicht reproduzierbar; GitLab und GitHub liefern also unterschiedliche Dateien.
 
 Commits und Tags werden signiert. Von einem LLM unterstützte Commits erhalten den Trailer `Assisted-by: <Modell>`.
 
-Die Projektseiten liefern die Programmdatei ebenfalls aus – öffentlich unter <https://smoebody.github.io/lutris-zwift/>, nach Anmeldung unter <https://multimedia.pages.metaccount.de/zwift>:
+Die Projektseiten liefern die Programmdatei ebenfalls aus – öffentlich unter <https://smoebody.github.io/lutris-zwift/>, nach Anmeldung unter <https://multimedia.pages.metaccount.de/lutris-zwift>:
 
 | Download | Pfad |
 |---|---|

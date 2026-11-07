@@ -11,12 +11,12 @@
     <h1>Zwift on Linux with Lutris</h1>
     <p>A Lutris install script for the Windows version of Zwift. Zwift runs in the Lutris <code>wine</code> runner using <code>dw-proton</code>; no system Wine is required. The game starts in fullscreen and keeps itself up to date.</p>
 
-    <p><a class="button" href="zwift-lutris.yml" download>Download zwift-lutris.yml</a></p>
+    <p><a class="button" href="lutris-zwift.yml" download>Download lutris-zwift.yml</a></p>
 
     <h2>How to install</h2>
     <ol>
         <li>
-            <p><strong>Download <code>zwift-lutris.yml</code></strong> using the button above. If your browser shows the file as text instead of saving it, use “Save Page As…” and keep the name <code>zwift-lutris.yml</code>.</p>
+            <p><strong>Download <code>lutris-zwift.yml</code></strong> using the button above. If your browser shows the file as text instead of saving it, use “Save Page As…” and keep the name <code>lutris-zwift.yml</code>.</p>
         </li>
         <li>
             <p><strong>Install Lutris</strong> (version 0.5.22 or newer) from your distribution’s package manager:</p>
@@ -26,7 +26,7 @@ sudo pacman -S lutris        # Arch Linux</pre>
             <p>The Flatpak version of Lutris is currently <strong>not supported</strong> (see <a href="#troubleshooting">Troubleshooting</a>).</p>
         </li>
         <li>
-            <p><strong>Open the local install script.</strong> In Lutris click <strong>+</strong> (top left), choose <strong>Install from a local install script</strong> (“Run a YAML install script”; German: “Installiere von einem lokalen Installationsskript”) and select the downloaded <code>zwift-lutris.yml</code>.</p>
+            <p><strong>Open the local install script.</strong> In Lutris click <strong>+</strong> (top left), choose <strong>Install from a local install script</strong> (“Run a YAML install script”; German: “Installiere von einem lokalen Installationsskript”) and select the downloaded <code>lutris-zwift.yml</code>.</p>
         </li>
         <li>
             <p><strong>Run the installation.</strong> Choose a <strong>new, empty directory</strong> as target, e.g. <code>~/Games/zwift</code>, and click <strong>Install</strong>. Lutris first downloads dw-proton and the Steam runtime if they are missing, then installs .NET Framework 4.8, WebView2, the Zwift launcher and finally the game itself. This takes about 15–60 minutes depending on your connection; windows may pop up and close again. Do not cancel the installation.</p>
@@ -50,7 +50,7 @@ sudo pacman -S lutris        # Arch Linux</pre>
         <tr><td>Installation stops after a few seconds with “Command exited with code 256”; the log shows “wine client error: version mismatch”</td><td>Flatpak Lutris, or a Lutris older than 0.5.22. The script expects dw-proton under <code>~/.local/share/lutris/runners/wine/</code>. Install Lutris from your distribution’s packages.</td></tr>
         <tr><td>Installation or update aborts, “No space left on device”</td><td>Not enough disk space. Free at least 12 GB, then delete the target directory and start again.</td></tr>
         <tr><td>Installation seems to hang</td><td>Installing .NET Framework 4.8 alone takes several minutes, the game download several GB. Wait; check network activity.</td></tr>
-        <tr><td>Download error, or checksum error for <code>ZwiftStart.exe</code></td><td>No internet access, or a firewall/proxy blocks <code>cdn.zwift.com</code> or <code>github.com</code>. A checksum error means a broken download or an outdated script: download <code>zwift-lutris.yml</code> again.</td></tr>
+        <tr><td>Download error, or checksum error for <code>ZwiftStart.exe</code></td><td>No internet access, or a firewall/proxy blocks <code>cdn.zwift.com</code> or <code>github.com</code>. A checksum error means a broken download or an outdated script: download <code>lutris-zwift.yml</code> again.</td></tr>
         <tr><td>Installation fails at “Download the game via the Zwift launcher”</td><td>The game download took longer than 60 minutes or the launcher quit. Details are in <code>drive_c/Program Files (x86)/Zwift/ZwiftStart.log</code> inside the target directory. Simply start Zwift from Lutris: the update is resumed on every start.</td></tr>
         <tr><td>Strange errors after installing into an existing directory</td><td>Always install into a new, empty directory. Do not reuse a Wine prefix created with another Wine or Proton version.</td></tr>
         <tr><td>Zwift closes right after starting</td><td>See <code>ZwiftStart.log</code> (path above) and <code>drive_c/users/steamuser/AppData/Local/Zwift/Logs/Log.txt</code>. Run Lutris from a terminal (<code>lutris -d</code>) for more output.</td></tr>

@@ -14,12 +14,12 @@ Die Anmeldung findet ausschließlich im Spiel statt. Keine API-Tokens oder Zugan
 
 | Datei | Aufgabe |
 |---|---|
-| [zwift-lutris.yml](zwift-lutris.yml) | Lutris-Installer; `files`: `ZwiftSetup.exe` (Zwift-CDN) und `ZwiftStart.exe` (GitHub-Release `release/X.Y.Z`, mit `checksum`) |
+| [lutris-zwift.yml](lutris-zwift.yml) | Lutris-Installer; `files`: `ZwiftSetup.exe` (Zwift-CDN) und `ZwiftStart.exe` (GitHub-Release `release/X.Y.Z`, mit `checksum`) |
 | [ZwiftStart.cs](ZwiftStart.cs) | C#-Startprogramm, .NET Framework 4, `ZwiftStart.exe [--update-only \| --no-update]`, Log `ZwiftStart.log` im Zwift-Verzeichnis |
 | [readme.md](readme.md) | Installation, Ablauf, Build und Releases |
 | [.gitlab-ci.yml](.gitlab-ci.yml) | GitLab-CI: `build` (Mono `mcs`), `package_staging`/`package_release` (Generic Package Registry `zwiftstart`), `release`, `pages` |
 | [.github/workflows/ci.yml](.github/workflows/ci.yml) | GitHub Actions mit derselben Logik: `build`, `staging` (wanderndes Pre-Release `staging`), `release`, `pages` |
-| [public-src/](public-src/) | Pages-Vorlage für beide Plattformen; Platzhalter `@RELEASE@`, `@STAGING@`, `@COMMIT@`, `@DATE@`, `@PROJECT_URL@`, `@PROJECT_NOTE@` ersetzt der jeweilige `pages`-Job. Seite auf Englisch mit Anleitung, Speicherbedarf und Fehlerbehebung; der `pages`-Job kopiert `zwift-lutris.yml` mit auf die Seite |
+| [public-src/](public-src/) | Pages-Vorlage für beide Plattformen; Platzhalter `@RELEASE@`, `@STAGING@`, `@COMMIT@`, `@DATE@`, `@PROJECT_URL@`, `@PROJECT_NOTE@` ersetzt der jeweilige `pages`-Job. Seite auf Englisch mit Anleitung, Speicherbedarf und Fehlerbehebung; der `pages`-Job kopiert `lutris-zwift.yml` mit auf die Seite |
 
 Die früheren Bash-Wrapper (`install-zwift.sh`, `start-zwift.sh`, `update-zwift.sh`) und `RunFromProcess.cs` (Runner `linux`, Wine ohne umu) wurden am 7. November 2026 entfernt; sie liegen im Git-Verlauf und im Release 0.1.0.
 
@@ -29,7 +29,7 @@ In die Quellablage gehört nur der C#-Quelltext, keine übersetzte `.exe`.
 
 | Zweck | Pfad |
 |---|---|
-| Quellablage | `/home/smoe/Projects/metaccount/multimedia/zwift` |
+| Quellablage | `/home/smoe/Projects/metaccount/multimedia/lutris-zwift` |
 | Wine (Lutris-Runner dw-proton) | `~/.local/share/lutris/runners/wine/dw-proton-x86_64` |
 | Protonfix für Zwift | `~/.local/share/lutris/runners/wine/dw-proton-x86_64/protonfixes/gamefixes-umu/umu-zwift.py` |
 | Lutris-Installation (Runner wine, Lutris-Eintrag „Zwift“, ID 2) | `/home/smoe/Games/zwift-lutris-test` |
@@ -60,11 +60,11 @@ In die Quellablage gehört nur der C#-Quelltext, keine übersetzte `.exe`.
 
 ## Repositorys, CI, Pakete und Pages
 
-- **GitLab** `multimedia/zwift` (ID 110, privat) auf `gitlab.metaccount.de`; Remote `origin` per SSH über `git.metaccount.de:10022`. Hauptrepository.
+- **GitLab** `multimedia/lutris-zwift` (ID 110, privat) auf `gitlab.metaccount.de`; Remote `origin` per SSH über `git.metaccount.de:10022`. Hauptrepository.
 - **GitHub** `smoebody/lutris-zwift` (öffentlich): Spiegel über GitLab-Push-Mirror (ID 4, Deploy-Key, `only_protected_branches`, `keep_divergent_refs=true`). Ohne `keep_divergent_refs` löscht der Spiegel das Tag `staging`, das nur auf GitHub existiert. Nicht direkt auf GitHub committen.
 - `ZwiftStart.exe` wird im CI mit Mono `mcs -platform:x64` übersetzt und auf PE32+/x86-64 geprüft. Die Übersetzung ist nicht reproduzierbar (auch nicht mit `-deterministic`); maßgeblich für den Installer ist die Datei aus dem GitHub-Release.
-- Release-Tags `release/X.Y.Z` lösen auf beiden Plattformen ein Release aus. Danach URL und `checksum` in `zwift-lutris.yml` anpassen.
-- GitLab Pages (`https://multimedia.pages.metaccount.de/zwift`) nur nach Anmeldung; GitHub Pages (`https://smoebody.github.io/lutris-zwift/`) öffentlich, Quelle „GitHub Actions“.
+- Release-Tags `release/X.Y.Z` lösen auf beiden Plattformen ein Release aus. Danach URL und `checksum` in `lutris-zwift.yml` anpassen.
+- GitLab Pages (`https://multimedia.pages.metaccount.de/lutris-zwift`) nur nach Anmeldung; GitHub Pages (`https://smoebody.github.io/lutris-zwift/`) öffentlich, Quelle „GitHub Actions“.
 - Beide `pages`-Jobs laden Staging und das höchste `release/*`-Tag; Releases ohne `ZwiftStart.exe` (0.1.0) werden übersprungen.
 
 ## Commits
@@ -83,8 +83,8 @@ In die Quellablage gehört nur der C#-Quelltext, keine übersetzte `.exe`.
 ## Prüfbefehle
 
 ```bash
-cd /home/smoe/Projects/metaccount/multimedia/zwift
-python3 -c "import yaml; [yaml.safe_load(open(f)) for f in ('zwift-lutris.yml', '.gitlab-ci.yml', '.github/workflows/ci.yml')]; print('YAML ok')"
+cd /home/smoe/Projects/metaccount/multimedia/lutris-zwift
+python3 -c "import yaml; [yaml.safe_load(open(f)) for f in ('lutris-zwift.yml', '.gitlab-ci.yml', '.github/workflows/ci.yml')]; print('YAML ok')"
 mkdir -p /tmp/opencode/zs
 podman run --rm -v "$PWD":/src:ro,Z -v /tmp/opencode/zs:/out:Z docker.io/library/mono:6.12 \
     mcs -platform:x64 -optimize+ -target:exe -out:/out/ZwiftStart.exe /src/ZwiftStart.cs
@@ -106,7 +106,7 @@ Nach einer Änderung am Startablauf ist ein realer Start bis zum Anmeldefenster 
 Zwift hat dort bereits eine Spielseite (`zwift`, ID 30983) mit zwei Installern (`zwift-1301` von tmiland, `zwift-windows`), beide mit nirsoft RunFromProcess. Einreichen:
 
 1. Konto auf lutris.net anlegen und anmelden.
-2. Auf <https://lutris.net/games/zwift/> „Add installer“ wählen. Den Inhalt von `script:` aus `zwift-lutris.yml` einfügen (ohne `name`, `game_slug`, `slug`, `runner` – diese Felder setzt das Formular). Dazu Runner `wine`, Version (z. B. „dw-proton“), Beschreibung und Notes ausfüllen.
+2. Auf <https://lutris.net/games/zwift/> „Add installer“ wählen. Den Inhalt von `script:` aus `lutris-zwift.yml` einfügen (ohne `name`, `game_slug`, `slug`, `runner` – diese Felder setzt das Formular). Dazu Runner `wine`, Version (z. B. „dw-proton“), Beschreibung und Notes ausfüllen.
 3. Moderatoren prüfen den Entwurf; erst danach ist er für alle sichtbar. Änderungen gehen als neue Revision wieder durch die Prüfung.
 
 Voraussetzungen: nur öffentliche URLs mit `checksum` (außer `ZwiftSetup.exe`, das sich ändert), keine lokalen Pfade. `$HOME` in `PROTONPATH` ist an den Lutris-Runner-Pfad gebunden; bei Flatpak-Lutris ist dieser anders. Flatpak-Lutris ist daher als nicht unterstützt dokumentiert.
@@ -115,5 +115,5 @@ Voraussetzungen: nur öffentliche URLs mit `checksum` (außer `ZwiftSetup.exe`, 
 
 7. November 2026, Fedora 44, Lutris 0.5.22 (RPM), dw-proton `dwproton-11.0-14`, umu 1.4.4, Zwift `1.125.0`:
 
-- Vollinstallation über `zwift-lutris.yml` (ZwiftStart.exe vom lokalen Testserver) nach `/home/smoe/Games/zwift-lutris-test`: alle Schritte mit Code 0, Lutris-Eintrag mit Runner `wine`.
+- Vollinstallation über `lutris-zwift.yml` (ZwiftStart.exe vom lokalen Testserver) nach `/home/smoe/Games/zwift-lutris-test`: alle Schritte mit Code 0, Lutris-Eintrag mit Runner `wine`.
 - Start aus Lutris: `Legacy Launcher Used` und `GameFlowState Login`, Vollbild ohne Titelleiste (vom Benutzer bestätigt).

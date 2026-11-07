@@ -128,7 +128,7 @@ jobs:
           set -eu
           latest_tag=$(git tag --list 'release/*' | grep -E '^release/[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
 
-          rm -rf public && cp -r public-src public && cp zwift-lutris.yml public/
+          rm -rf public && cp -r public-src public && cp lutris-zwift.yml public/
 
           staging_html='<p>No staging build available yet.</p>'
           mkdir -p public/download/staging
