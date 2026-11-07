@@ -6,9 +6,18 @@ START_WRAPPER="${2:?Pfad zum Startwrapper fehlt}"
 UPDATE_WRAPPER="${3:?Pfad zum Updatewrapper fehlt}"
 RUNFROMPROCESS_SOURCE="${4:?Pfad zu RunFromProcess.cs fehlt}"
 
-export WINE="${WINE:-/usr/bin/wine64}"
-export WINESERVER="${WINESERVER:-/usr/bin/wineserver}"
+# Wine-Build aus dem Lutris-Runner "dw-proton"; fehlt er, wird dieselbe
+# Version geladen, die Lutris anbietet. Ohne umu, damit Prozesse eines
+# Praefixes sich weiter gegenseitig sehen.
+DWPROTON_VERSION='dwproton-11.0-14'
+DWPROTON_SHA256='c563cc99d464fb19a767a0eb90dc723746bfcdd402a4fdaa0737b12af081f99a'
+DWPROTON_URL="https://github.com/dawn-winery/dwproton-mirror/releases/download/$DWPROTON_VERSION/$DWPROTON_VERSION-x86_64.tar.xz"
+LUTRIS_WINE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/lutris/runners/wine/dw-proton-x86_64"
+
+export WINE="${WINE:-$LUTRIS_WINE_DIR/files/bin/wine}"
+export WINESERVER="${WINESERVER:-$(dirname -- "$WINE")/wineserver}"
 export WINEDEBUG="${WINEDEBUG:-fixme-all}"
+WINE_DATA_DIR="$(dirname -- "$WINE")/../share/wine"
 
 # Gleicher Stand wie im Netbrain-Dockerfile: enthaelt das Verb webview2.
 WINETRICKS_VERSION='f3890f670867b5ffbc3938726db45c0f7d16c8ba'
@@ -25,16 +34,9 @@ if [[ -d "$TARGET_DIR" ]] && [[ -n "$(find "$TARGET_DIR" -mindepth 1 -maxdepth 1
     printf 'Zum Schutz einer bestehenden Installation wird abgebrochen.\n' >&2
     exit 1
 fi
-for command_name in "$WINE" "$WINESERVER" curl sha256sum cabextract unzip ntlm_auth; do
+for command_name in curl sha256sum tar xz cabextract unzip ntlm_auth; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
         printf 'Benötigtes Programm fehlt: %s\n' "$command_name" >&2
-        exit 1
-    fi
-done
-# Ohne wine-common (Fedora) fehlen diese Daten; wineboot haengt dann endlos.
-for wine_data in /usr/share/wine/wine.inf /usr/share/wine/winmd; do
-    if [[ ! -e "$wine_data" ]]; then
-        printf 'Wine-Daten fehlen: %s (Paket wine-common installieren)\n' "$wine_data" >&2
         exit 1
     fi
 done
@@ -51,6 +53,29 @@ cleanup() {
     rm -rf -- "$WORK_DIR"
 }
 trap cleanup EXIT
+
+if [[ ! -x "$WINE" && "$WINE" == "$LUTRIS_WINE_DIR/files/bin/wine" ]]; then
+    printf 'Lade %s fuer den Lutris-Runner dw-proton ...\n' "$DWPROTON_VERSION"
+    curl -fsSL -o "$WORK_DIR/dwproton.tar.xz" "$DWPROTON_URL"
+    printf '%s  %s\n' "$DWPROTON_SHA256" "$WORK_DIR/dwproton.tar.xz" | sha256sum -c --quiet -
+    mkdir -p "$LUTRIS_WINE_DIR"
+    tar -xJf "$WORK_DIR/dwproton.tar.xz" -C "$LUTRIS_WINE_DIR" --strip-components=1
+    rm -f -- "$WORK_DIR/dwproton.tar.xz"
+fi
+for command_name in "$WINE" "$WINESERVER"; do
+    if [[ ! -x "$command_name" ]]; then
+        printf 'Wine-Programm fehlt: %s\n' "$command_name" >&2
+        exit 1
+    fi
+done
+# Ohne diese Daten haengt wineboot endlos (z. B. Fedora ohne wine-common).
+for wine_data in "$WINE_DATA_DIR/wine.inf" "$WINE_DATA_DIR/winmd"; do
+    if [[ ! -e "$wine_data" ]]; then
+        printf 'Wine-Daten fehlen: %s\n' "$wine_data" >&2
+        exit 1
+    fi
+done
+printf 'Verwende %s\n' "$("$WINE" --version)"
 
 printf 'Lade winetricks %s ...\n' "$WINETRICKS_VERSION"
 curl -fsSL -o "$WORK_DIR/winetricks" "$WINETRICKS_URL"

@@ -1,7 +1,7 @@
 name: Zwift
 game_slug: zwift
-version: Windows (WineHQ)
-slug: zwift-wine-native
+version: Windows (dw-proton)
+slug: zwift-dwproton
 runner: linux
 
 # Lutris 0.5.22 kann file://-URLs im Abschnitt files nicht laden. Der Installer
@@ -24,10 +24,10 @@ script:
 
   installer:
     - execute:
-        description: Wine-Praefix mit dotnet48, WebView2 und Zwift einrichten
+        description: dw-proton laden, Wine-Praefix mit dotnet48, WebView2 und Zwift einrichten
         file: /usr/bin/bash
         args: >-
-          /home/smoe/Projects/metaccount/multimedia/zwift/install-zwift-winehq.sh
+          /home/smoe/Projects/metaccount/multimedia/zwift/install-zwift.sh
           $GAMEDIR
           /home/smoe/Projects/metaccount/multimedia/zwift/start-zwift.sh
           /home/smoe/Projects/metaccount/multimedia/zwift/update-zwift.sh
@@ -35,11 +35,13 @@ script:
         disable_runtime: true
 
 notes: |
-  Voraussetzungen sind System-Wine (Fedora: Paket wine, inklusive
-  wine-common), curl, cabextract, unzip und ntlm_auth
-  (samba-winbind-clients). Als Installationsziel muss ein leeres Verzeichnis
-  ausgewaehlt werden. Die Installation laedt winetricks, dotnet48, WebView2
-  und Zwift herunter und dauert entsprechend.
+  Kein System-Wine noetig: Verwendet wird der Lutris-Wine-Runner dw-proton
+  (~/.local/share/lutris/runners/wine/dw-proton-x86_64). Fehlt er, laedt der
+  Installer dieselbe Version wie Lutris (dwproton-11.0-14, Pruefsumme
+  geprueft). Voraussetzungen sind curl, tar, xz, cabextract, unzip und
+  ntlm_auth (samba-winbind-clients). Als Installationsziel muss ein leeres
+  Verzeichnis ausgewaehlt werden. Die Installation laedt dw-proton,
+  winetricks, dotnet48, WebView2 und Zwift herunter und dauert entsprechend.
 
   update-zwift.sh prueft vor dem Spielstart die CDN-Version und wartet bei
   Bedarf auf SilentLaunch. start-zwift.sh startet ZwiftApp.exe anschliessend

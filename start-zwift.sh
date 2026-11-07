@@ -5,8 +5,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 export WINEPREFIX="${WINEPREFIX:-$SCRIPT_DIR}"
 export WINEDEBUG="${WINEDEBUG:-fixme-all}"
 
-WINE="${WINE:-/usr/bin/wine64}"
-WINESERVER="${WINESERVER:-/usr/bin/wineserver}"
+WINE="${WINE:-${XDG_DATA_HOME:-$HOME/.local/share}/lutris/runners/wine/dw-proton-x86_64/files/bin/wine}"
+WINESERVER="${WINESERVER:-$(dirname -- "$WINE")/wineserver}"
 INSTALL_DIR="$WINEPREFIX/drive_c/Program Files (x86)/Zwift"
 WINDOWS_INSTALL_DIR='C:\Program Files (x86)\Zwift'
 USER_PROFILE="$WINEPREFIX/drive_c/users/$(id -un)"
