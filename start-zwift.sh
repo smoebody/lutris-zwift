@@ -7,9 +7,20 @@ export WINEDEBUG="${WINEDEBUG:-fixme-all}"
 
 WINE="${WINE:-${XDG_DATA_HOME:-$HOME/.local/share}/lutris/runners/wine/dw-proton-x86_64/files/bin/wine}"
 WINESERVER="${WINESERVER:-$(dirname -- "$WINE")/wineserver}"
+# dw-proton haelt vkd3d getrennt in lib/vkd3d; ohne Proton-Skript muss
+# WINEDLLPATH wie dort gesetzt werden, sonst fehlt wined3d.dll libvkd3d-1.dll.
+WINE_LIB_DIR="$(dirname -- "$WINE")/../lib"
+if [[ -d "$WINE_LIB_DIR/vkd3d" ]]; then
+    export WINEDLLPATH="$WINE_LIB_DIR/vkd3d:$WINE_LIB_DIR/wine${WINEDLLPATH:+:$WINEDLLPATH}"
+fi
 INSTALL_DIR="$WINEPREFIX/drive_c/Program Files (x86)/Zwift"
 WINDOWS_INSTALL_DIR='C:\Program Files (x86)\Zwift'
+# Proton-Builds wie dw-proton verwenden unabhaengig vom Linux-Benutzer
+# immer "steamuser".
 USER_PROFILE="$WINEPREFIX/drive_c/users/$(id -un)"
+if [[ -d "$WINEPREFIX/drive_c/users/steamuser" ]]; then
+    USER_PROFILE="$WINEPREFIX/drive_c/users/steamuser"
+fi
 
 # In Praefixen, die unter einem anderen Benutzernamen erstellt wurden, legt
 # Wine nicht alle Standardordner an. ZwiftApp.exe beendet sich ohne sie.

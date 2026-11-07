@@ -18,6 +18,9 @@ export WINE="${WINE:-$LUTRIS_WINE_DIR/files/bin/wine}"
 export WINESERVER="${WINESERVER:-$(dirname -- "$WINE")/wineserver}"
 export WINEDEBUG="${WINEDEBUG:-fixme-all}"
 WINE_DATA_DIR="$(dirname -- "$WINE")/../share/wine"
+# dw-proton haelt vkd3d getrennt in lib/vkd3d; ohne Proton-Skript muss
+# WINEDLLPATH wie dort gesetzt werden, sonst fehlt wined3d.dll libvkd3d-1.dll.
+WINE_LIB_DIR="$(dirname -- "$WINE")/../lib"
 
 # Gleicher Stand wie im Netbrain-Dockerfile: enthaelt das Verb webview2.
 WINETRICKS_VERSION='f3890f670867b5ffbc3938726db45c0f7d16c8ba'
@@ -61,6 +64,9 @@ if [[ ! -x "$WINE" && "$WINE" == "$LUTRIS_WINE_DIR/files/bin/wine" ]]; then
     mkdir -p "$LUTRIS_WINE_DIR"
     tar -xJf "$WORK_DIR/dwproton.tar.xz" -C "$LUTRIS_WINE_DIR" --strip-components=1
     rm -f -- "$WORK_DIR/dwproton.tar.xz"
+fi
+if [[ -d "$WINE_LIB_DIR/vkd3d" ]]; then
+    export WINEDLLPATH="$WINE_LIB_DIR/vkd3d:$WINE_LIB_DIR/wine${WINEDLLPATH:+:$WINEDLLPATH}"
 fi
 for command_name in "$WINE" "$WINESERVER"; do
     if [[ ! -x "$command_name" ]]; then

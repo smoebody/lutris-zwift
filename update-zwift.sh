@@ -7,6 +7,12 @@ export WINEDEBUG="${WINEDEBUG:-fixme-all}"
 
 WINE="${WINE:-${XDG_DATA_HOME:-$HOME/.local/share}/lutris/runners/wine/dw-proton-x86_64/files/bin/wine}"
 WINESERVER="${WINESERVER:-$(dirname -- "$WINE")/wineserver}"
+# dw-proton haelt vkd3d getrennt in lib/vkd3d; ohne Proton-Skript muss
+# WINEDLLPATH wie dort gesetzt werden, sonst fehlt wined3d.dll libvkd3d-1.dll.
+WINE_LIB_DIR="$(dirname -- "$WINE")/../lib"
+if [[ -d "$WINE_LIB_DIR/vkd3d" ]]; then
+    export WINEDLLPATH="$WINE_LIB_DIR/vkd3d:$WINE_LIB_DIR/wine${WINEDLLPATH:+:$WINEDLLPATH}"
+fi
 ZWIFT_DIR="$WINEPREFIX/drive_c/Program Files (x86)/Zwift"
 WINDOWS_ZWIFT_DIR='C:\Program Files (x86)\Zwift'
 VERSION_URL='https://cdn.zwift.com/gameassets/Zwift_Updates_Root/Zwift_ver_cur.xml'
