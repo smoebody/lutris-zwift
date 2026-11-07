@@ -1,36 +1,40 @@
-# Zwift unter Linux mit Lutris und WineHQ
+# Zwift unter Linux mit Lutris
 
-Dieses Verzeichnis enthält die Installations-, Update- und Startdateien für die Windows-Version von Zwift. Das Windows-Spiel läuft mit dem systemweit installierten WineHQ; Lutris startet lediglich einen Linux-Wrapper. Der Installer richtet das Wine-Präfix selbst ein. Ein Container-Image wird nicht benötigt.
+Dieses Repository enthält die Installations-, Update- und Startdateien für die Windows-Version von Zwift. Das Windows-Spiel läuft mit dem Lutris-Wine-Runner **dw-proton**; ein systemweit installiertes Wine ist nicht nötig. Lutris startet lediglich einen Linux-Wrapper. Der Installer lädt dw-proton bei Bedarf selbst und richtet das Wine-Präfix ein. Ein Container-Image wird nicht benötigt.
 
-Die bisherige produktive Installation liegt außerhalb dieses Projektverzeichnisses in `/home/smoe/Games/zwift-winehq`. Sie stammt noch aus dem Netbrain-Image und wird von diesen Dateien nicht verändert. Das frühere Proton-Präfix `/home/smoe/Games/zwift` bleibt ebenfalls unberührt.
+Quellen: [GitLab](https://gitlab.metaccount.de/multimedia/zwift) (Hauptrepository) · [GitHub](https://github.com/smoebody/lutris-zwift) (Spiegel) · Downloads: [smoebody.github.io/lutris-zwift](https://smoebody.github.io/lutris-zwift/)
 
 ## Dateien
 
 | Datei | Zweck |
 |---|---|
 | [zwift-lutris.yml](zwift-lutris.yml) | Lokaler Lutris-Installer; ruft den Installer mit den Quelldateien aus diesem Verzeichnis auf |
-| [install-zwift-winehq.sh](install-zwift-winehq.sh) | Richtet ein neues Wine-Präfix mit dotnet48, WebView2 und Zwift in einem leeren Zielverzeichnis ein |
+| [install-zwift.sh](install-zwift.sh) | Lädt bei Bedarf dw-proton und richtet ein neues Wine-Präfix mit dotnet48, WebView2 und Zwift in einem leeren Zielverzeichnis ein |
 | [update-zwift.sh](update-zwift.sh) | Vergleicht die installierte Version mit dem Zwift-CDN und aktualisiert bei Bedarf |
 | [start-zwift.sh](start-zwift.sh) | Startet `ZwiftApp.exe` über den Launcher und `RunFromProcess.exe` |
 | [RunFromProcess.cs](RunFromProcess.cs) | Quelltext des Hilfsprogramms, das `ZwiftApp.exe` als Kindprozess des Launchers startet |
 | [agents.md](agents.md) | Technische Pfade, Wartungsregeln und Prüfbefehle |
-| [.gitlab-ci.yml](.gitlab-ci.yml) | Übersetzt `RunFromProcess.exe`, veröffentlicht Pakete, Releases und die Projektseite |
-| [public-src/](public-src/) | Vorlage der statischen Projektseite (GitLab Pages) |
+| [.gitlab-ci.yml](.gitlab-ci.yml) | GitLab-CI: übersetzt `RunFromProcess.exe`, veröffentlicht Pakete, Releases und die Projektseite |
+| [.github/workflows/ci.yml](.github/workflows/ci.yml) | Dieselbe Pipeline als GitHub Actions |
+| [public-src/](public-src/) | Vorlage der statischen Projektseite (GitLab und GitHub Pages) |
 
 Die Windows-Programmdateien, das Wine-Präfix, Zugangsdaten und Logs sind nicht Bestandteil dieser Quellablage.
 
 ## Voraussetzungen
 
 - Lutris
-- systemweites WineHQ mit `/usr/bin/wine64` und `/usr/bin/wineserver`, unter Fedora das vollständige Paket `wine` (insbesondere `wine-common`)
-- `curl`, `sha256sum`, `cabextract`, `unzip`
+- `curl`, `sha256sum`, `tar`, `xz`, `cabextract`, `unzip`
 - `ntlm_auth` aus `samba-winbind-clients`
 - GNU `grep` mit PCRE-Unterstützung (`grep -P`)
 - Internetzugang während der Installation
 
-Fehlt `wine-common`, fehlen `/usr/share/wine/wine.inf` beziehungsweise `/usr/share/wine/winmd`. `wineboot` hängt dann endlos beim Anlegen des Präfixes. Der Installer prüft das vorab und bricht mit einer Meldung ab.
+### Wine: dw-proton aus Lutris
 
-Getestet wurde der Stand mit Zwift `1.125.0` und System-Wine `11.20 (Staging)` unter Fedora 44.
+Verwendet wird der Wine-Build aus dem Lutris-Runner `dw-proton` unter `~/.local/share/lutris/runners/wine/dw-proton-x86_64/files/bin/wine`. Ist er nicht vorhanden, lädt der Installer dieselbe Version, die Lutris anbietet (`dwproton-11.0-14`), prüft die SHA-256-Summe und entpackt sie an diese Stelle. Lutris erkennt den Runner danach ebenfalls.
+
+Die Skripte rufen `wine` aus dw-proton direkt auf, ohne umu bzw. das Proton-Startskript. Nur so laufen alle Prozesse im selben Präfix sichtbar nebeneinander – Voraussetzung dafür, dass `ZwiftApp.exe` als Kindprozess des Launchers starten kann.
+
+Mit den Umgebungsvariablen `WINE` und `WINESERVER` lässt sich ein anderes Wine wählen, etwa ein System-Wine (`WINE=/usr/bin/wine64 WINESERVER=/usr/bin/wineserver`). Unter Fedora muss es dann das vollständige Paket `wine` inklusive `wine-common` sein; der Installer prüft `wine.inf` und `winmd` vorab.
 
 ## Neue Installation über Lutris
 
@@ -38,9 +42,9 @@ Getestet wurde der Stand mit Zwift `1.125.0` und System-Wine `11.20 (Staging)` u
 2. Als Ziel ein **neues oder leeres Verzeichnis** auswählen. Der Installer bricht bei einem nicht leeren Ziel ab, damit keine bestehende Installation überschrieben wird.
 3. Nach der Installation Zwift über den erzeugten Lutris-Eintrag starten.
 
-Der Installer lädt winetricks in einer festen Version (mit Prüfsumme), installiert damit `corefonts`, `dotnet48`, `d3dcompiler_47` und `webview2` und stellt den Vulkan-Renderer ein. Anschließend installiert er `ZwiftSetup.exe` vom Zwift-CDN, übersetzt `RunFromProcess.exe` mit dem `csc.exe` aus dotnet48 und lädt über `update-zwift.sh` das eigentliche Spiel. Das dauert je nach Verbindung längere Zeit; zwischendurch können Installationsfenster erscheinen.
+Der Installer lädt bei Bedarf dw-proton und winetricks in einer festen Version (mit Prüfsumme), installiert damit `corefonts`, `dotnet48`, `d3dcompiler_47` und `webview2` und stellt den Vulkan-Renderer ein. Anschließend installiert er `ZwiftSetup.exe` vom Zwift-CDN, übersetzt `RunFromProcess.exe` mit dem `csc.exe` aus dotnet48 und lädt über `update-zwift.sh` das eigentliche Spiel. Das dauert je nach Verbindung längere Zeit; zwischendurch können Installationsfenster erscheinen.
 
-Der Lutris-Runner ist bewusst `linux`: Ausgeführt wird `start-zwift.sh`; dieses Skript ruft das Windows-Spiel mit `/usr/bin/wine64` auf. Es wird also nicht der Linux-Build von Zwift verwendet.
+Der Lutris-Runner ist bewusst `linux`: Ausgeführt wird `start-zwift.sh`; dieses Skript ruft das Windows-Spiel mit `wine` aus dw-proton auf. Es wird also nicht der Linux-Build von Zwift verwendet.
 
 ### Manuelle Installation
 
@@ -48,7 +52,7 @@ Alternativ kann der Installer direkt aufgerufen werden:
 
 ```bash
 cd /home/smoe/Projects/metaccount/multimedia/zwift
-./install-zwift-winehq.sh \
+./install-zwift.sh \
   /pfad/zum/leeren/zwift-praefix \
   "$PWD/start-zwift.sh" \
   "$PWD/update-zwift.sh" \
@@ -64,17 +68,11 @@ Der Installer kopiert Start- und Updatewrapper in das neue Präfix. Von dort aus
 
 Ohne gesetztes `WINEPREFIX` erwarten beide Wrapper das Präfix in ihrem eigenen Verzeichnis. Für einen Aufruf aus diesem Projektverzeichnis muss `WINEPREFIX` gesetzt werden.
 
-## Bestehende Installation starten
+**Achtung:** Der Installer legt ein nicht vorhandenes Ziel an und installiert hinein. Er schützt nur vor nicht leeren Verzeichnissen. Den Zielpfad daher vorher prüfen.
 
-In Lutris den Eintrag **Zwift** starten. Dessen aktive Konfiguration verwendet weiterhin:
+## Spiel starten
 
-- Start: `/home/smoe/Games/zwift-winehq/start-zwift.sh`
-- Vorab ausgeführtes Update: `/home/smoe/Games/zwift-winehq/update-zwift.sh`
-- Wine-Präfix: `/home/smoe/Games/zwift-winehq`
-
-Diese Wrapper sind ältere Kopien und verwenden noch `runfromprocess-rs.exe` aus dem Netbrain-Image. Die Wrapper aus diesem Verzeichnis erwarten `RunFromProcess.exe` und dürfen nicht ohne Weiteres in das alte Präfix kopiert werden (siehe [agents.md](agents.md)).
-
-Der Startwrapper bleibt aktiv, solange `ZwiftApp.exe` läuft. Nach dem Beenden des Spiels beendet er die Wine-Prozesse dieses Präfixes.
+In Lutris den nach der Installation erzeugten Eintrag **Zwift** starten oder direkt `/pfad/zum/zwift-praefix/start-zwift.sh` aufrufen. Der Startwrapper bleibt aktiv, solange `ZwiftApp.exe` läuft. Nach dem Beenden des Spiels beendet er die Wine-Prozesse dieses Präfixes.
 
 ## Updates und Anmeldung
 
@@ -93,27 +91,32 @@ Im Testpräfix wurde geprüft, ob das Spiel ohne diesen Umweg startet:
 
 Nur als Kindprozess des Launchers lädt das Spiel und zeigt das Anmeldefenster. `RunFromProcess.exe` übernimmt dafür die Aufgabe von `runfromprocess-rs` aus dem Netbrain-Projekt. Der Quelltext liegt hier; übersetzt wird er erst im Präfix mit dem `csc.exe`, das dotnet48 mitbringt. So liegt keine Windows-Binärdatei in der Quellablage, und Rust wird nicht benötigt.
 
-## Wichtige WineHQ-Anpassungen
+## Wichtige Wine-Anpassungen
 
 - **Vollständige Benutzerprofilordner:** Der Startwrapper legt unter `drive_c/users/$USER` unter anderem `Documents`, `Downloads` und `Saved Games` an. Fehlen sie, beendet sich `ZwiftApp.exe` sofort wieder.
 - **`LC_ALL=C` für `tasklist`:** Die PID-Erkennung erwartet die englische Ausgabe `PID:` und funktioniert dadurch auch mit deutscher Systemgebietsschema-Einstellung.
-- **Getrennte Präfixe:** Proton und WineHQ werden nicht im selben Präfix eingesetzt oder nacheinander darauf angewendet.
+- **Ein Wine pro Präfix:** Ein Präfix nicht nacheinander mit verschiedenen Wine-Versionen (System-Wine, dw-proton, Proton über umu) betreiben.
 
 ## Build und Releases
 
-Die GitLab-Pipeline übersetzt `RunFromProcess.cs` mit Mono `mcs -platform:x64` (Image `mono:6.12`) und prüft, ob eine PE32+-Datei für x86-64 entstanden ist.
+GitLab ist das Hauptrepository; GitLab spiegelt jede Änderung samt Tags automatisch nach [GitHub](https://github.com/smoebody/lutris-zwift). Beide Plattformen übersetzen `RunFromProcess.cs` mit Mono `mcs -platform:x64` (Image `mono:6.12`) und prüfen, ob eine PE32+-Datei für x86-64 entstanden ist.
 
-- **Push auf `main`:** Upload als Staging-Version in die Generic Package Registry (Paket `runfromprocess`, Version `staging`), danach Aktualisierung der Projektseite.
-- **Tag `release/X.Y.Z`:** Upload als Paketversion `X.Y.Z`, GitLab-Release `RunFromProcess X.Y.Z` und Aktualisierung der Projektseite.
+| Ereignis | GitLab ([.gitlab-ci.yml](.gitlab-ci.yml)) | GitHub ([ci.yml](.github/workflows/ci.yml)) |
+|---|---|---|
+| Push auf `main` | Paket `runfromprocess`, Version `staging` | Pre-Release `staging` (Tag wandert mit) |
+| Tag `release/X.Y.Z` | Paketversion `X.Y.Z` und Release `RunFromProcess X.Y.Z` | Release `RunFromProcess X.Y.Z` |
+| beides | Projektseite neu bauen | Projektseite neu bauen |
 
-Release anlegen:
+Release anlegen (auf GitLab; der Spiegel überträgt das Tag nach GitHub):
 
 ```bash
-git tag release/1.0.0
+git tag -s release/1.0.0 -m "RunFromProcess 1.0.0"
 git push origin release/1.0.0
 ```
 
-Die Projektseite unter <https://multimedia.pages.metaccount.de/zwift> liefert die Programmdatei selbst aus:
+Commits und Tags werden signiert. Von einem LLM unterstützte Commits erhalten den Trailer `Assisted-by: <Modell>`.
+
+Die Projektseiten liefern die Programmdatei selbst aus – öffentlich unter <https://smoebody.github.io/lutris-zwift/>, nach Anmeldung unter <https://multimedia.pages.metaccount.de/zwift>:
 
 | Download | Pfad |
 |---|---|
@@ -121,13 +124,13 @@ Die Projektseite unter <https://multimedia.pages.metaccount.de/zwift> liefert di
 | Bestimmtes Release (nur das neueste) | `download/X.Y.Z/RunFromProcess.exe` |
 | Staging (`main`) | `download/staging/RunFromProcess.exe` |
 
-Zu jeder Datei gibt es eine `.sha256`-Prüfsumme. Ältere Releases liegen in der Paket-Registry des Projekts.
+Zu jeder Datei gibt es eine `.sha256`-Prüfsumme. Ältere Releases liegen in der GitLab-Paket-Registry beziehungsweise unter den GitHub-Releases.
 
 ## Statische Prüfung
 
 ```bash
 cd /home/smoe/Projects/metaccount/multimedia/zwift
-bash -n install-zwift-winehq.sh start-zwift.sh update-zwift.sh
+bash -n install-zwift.sh start-zwift.sh update-zwift.sh
 ```
 
 Die reine Updateprüfung einer Installation ist mit folgendem Befehl möglich; bei einer verfügbaren neuen Version wird dabei tatsächlich aktualisiert:
