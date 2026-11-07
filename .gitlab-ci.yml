@@ -167,6 +167,7 @@ pages:
           -e "s|@COMMIT@|${CI_COMMIT_SHORT_SHA}|g" \
           -e "s|@DATE@|$(date -u '+%Y-%m-%d %H:%M UTC')|g" \
           -e "s|@PROJECT_URL@|${CI_PROJECT_URL}|g" \
+          -e "s|@PROJECT_NOTE@| (Anmeldung erforderlich)|g" \
           public/index.html
       find public -type f | sort
   artifacts:

@@ -1,0 +1,168 @@
+# Mirrors .gitlab-ci.yml. GitHub has no generic package registry, so releases
+# take its place: "staging" is a moving pre-release, release/X.Y.Z are versioned.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['release/*']
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: mono:6.12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile RunFromProcess.exe
+        run: |
+          mkdir -p build
+          mcs -platform:x64 -optimize+ -target:exe -out:build/RunFromProcess.exe RunFromProcess.cs
+      # Ensure a PE32+ image for x86-64: "MZ", "PE\0\0", machine 0x8664, optional header magic 0x20b.
+      - name: Check PE32+ header
+        run: |
+          exe=build/RunFromProcess.exe
+          hex() { od -An -tx1 -j"$1" -N"$2" "$exe" | tr -d ' \n'; }
+          pe_offset=$((0x$(od -An -tx4 -j60 -N4 "$exe" | tr -d ' ')))
+          test "$(hex 0 2)" = 4d5a
+          test "$(hex "$pe_offset" 4)" = 50450000
+          test "$(hex $((pe_offset + 4)) 2)" = 6486
+          test "$(hex $((pe_offset + 24)) 2)" = 0b02
+      - name: Checksum
+        run: |
+          cd build
+          sha256sum RunFromProcess.exe > RunFromProcess.exe.sha256
+          cat RunFromProcess.exe.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RunFromProcess
+          path: build/
+          retention-days: 30
+
+  staging:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency: package-staging
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: RunFromProcess
+          path: build
+      - name: Publish staging pre-release
+        run: |
+          notes="RunFromProcess.exe vom aktuellen Stand von main (${GITHUB_SHA::8}). Wird bei jedem Push ersetzt."
+          if gh release view staging >/dev/null 2>&1; then
+              gh release edit staging --prerelease --target "$GITHUB_SHA" --notes "$notes"
+          else
+              gh release create staging --prerelease --target "$GITHUB_SHA" --title "RunFromProcess staging" --notes "$notes"
+          fi
+          # Move the tag to the current commit; release assets are replaced in place.
+          gh api -X PATCH "repos/$GH_REPO/git/refs/tags/staging" -f sha="$GITHUB_SHA" -F force=true
+          gh release upload staging build/RunFromProcess.exe build/RunFromProcess.exe.sha256 --clobber
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/release/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check tag format
+        run: echo "$GITHUB_REF_NAME" | grep -Eq '^release/[0-9]+\.[0-9]+\.[0-9]+$'
+      - uses: actions/download-artifact@v4
+        with:
+          name: RunFromProcess
+          path: build
+      - name: Publish release
+        run: |
+          version="${GITHUB_REF_NAME#release/}"
+          pages="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}"
+          notes=$(printf 'RunFromProcess.exe %s für Zwift unter Lutris, übersetzt aus %s.\n\nDownload auch über %s/download/%s/' \
+              "$version" "${GITHUB_SHA::8}" "$pages" "$version")
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "RunFromProcess ${version}" --notes "$notes" \
+              build/RunFromProcess.exe build/RunFromProcess.exe.sha256
+
+  pages:
+    # One of staging/release is always skipped; run after whichever ran, unless it failed.
+    if: >-
+      !cancelled() && !contains(needs.*.result, 'failure') &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/release/'))
+    needs: [staging, release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency: pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build site
+        run: |
+          set -eu
+          latest_tag=$(git tag --list 'release/*' | grep -E '^release/[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+
+          rm -rf public && cp -r public-src public
+
+          staging_html='<p>Noch keine Staging-Version vorhanden.</p>'
+          mkdir -p public/download/staging
+          if gh release download staging --dir public/download/staging \
+              --pattern RunFromProcess.exe --pattern RunFromProcess.exe.sha256; then
+              staging_sha=$(cut -d' ' -f1 public/download/staging/RunFromProcess.exe.sha256)
+              staging_html="<p><a class=\"button\" href=\"download/staging/RunFromProcess.exe\">RunFromProcess.exe (staging)</a></p>
+          <p class=\"meta\">Stand von <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/RunFromProcess.exe.sha256\">.sha256</a>)</p>"
+          else
+              rm -rf public/download/staging
+          fi
+
+          release_html='<p>Noch kein Release vorhanden.</p>'
+          if [ -n "$latest_tag" ]; then
+              version=${latest_tag#release/}
+              mkdir -p "public/download/${version}"
+              gh release download "$latest_tag" --dir "public/download/${version}" \
+                  --pattern RunFromProcess.exe --pattern RunFromProcess.exe.sha256
+              cp -r "public/download/${version}" public/download/latest
+              release_sha=$(cut -d' ' -f1 "public/download/${version}/RunFromProcess.exe.sha256")
+              release_html="<p><a class=\"button\" href=\"download/latest/RunFromProcess.exe\">RunFromProcess.exe ${version}</a></p>
+          <p class=\"meta\">Fester Link: <a href=\"download/${version}/RunFromProcess.exe\">download/${version}/RunFromProcess.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/RunFromProcess.exe.sha256\">.sha256</a>)</p>"
+          fi
+
+          printf '%s\n' "$staging_html" > "$RUNNER_TEMP/staging.html"
+          printf '%s\n' "$release_html" > "$RUNNER_TEMP/release.html"
+          sed -i \
+              -e "/@STAGING@/{r $RUNNER_TEMP/staging.html" -e 'd}' \
+              -e "/@RELEASE@/{r $RUNNER_TEMP/release.html" -e 'd}' \
+              -e "s|@COMMIT@|${GITHUB_SHA::8}|g" \
+              -e "s|@DATE@|$(date -u '+%Y-%m-%d %H:%M UTC')|g" \
+              -e "s|@PROJECT_URL@|${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}|g" \
+              -e "s|@PROJECT_NOTE@||g" \
+              public/index.html
+          find public -type f | sort
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deploy
+        uses: actions/deploy-pages@v4
