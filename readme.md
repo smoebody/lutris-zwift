@@ -93,7 +93,7 @@ Nur als Kindprozess des Launchers lädt das Spiel und zeigt das Anmeldefenster. 
 
 ## Wichtige Wine-Anpassungen
 
-- **Vollständige Benutzerprofilordner:** Der Startwrapper legt unter `drive_c/users/$USER` unter anderem `Documents`, `Downloads` und `Saved Games` an. Fehlen sie, beendet sich `ZwiftApp.exe` sofort wieder.
+- **Vollständige Benutzerprofilordner:** Der Startwrapper legt unter `drive_c/users/steamuser` (dw-proton; bei anderem Wine `drive_c/users/$USER`) unter anderem `Documents`, `Downloads` und `Saved Games` an. Fehlen sie, beendet sich `ZwiftApp.exe` sofort wieder.
 - **`LC_ALL=C` für `tasklist`:** Die PID-Erkennung erwartet die englische Ausgabe `PID:` und funktioniert dadurch auch mit deutscher Systemgebietsschema-Einstellung.
 - **Ein Wine pro Präfix:** Ein Präfix nicht nacheinander mit verschiedenen Wine-Versionen (System-Wine, dw-proton, Proton über umu) betreiben.
 
