@@ -1,5 +1,7 @@
 # Mirrors .gitlab-ci.yml. GitHub has no generic package registry, so releases
 # take its place: "staging" is a moving pre-release, release/X.Y.Z are versioned.
+# The GitLab push mirror must keep divergent refs, otherwise it deletes the
+# "staging" tag, which only exists on GitHub.
 name: CI
 
 on:
@@ -21,14 +23,14 @@ jobs:
     container: mono:6.12
     steps:
       - uses: actions/checkout@v4
-      - name: Compile RunFromProcess.exe
+      - name: Compile ZwiftStart.exe
         run: |
           mkdir -p build
-          mcs -platform:x64 -optimize+ -target:exe -out:build/RunFromProcess.exe RunFromProcess.cs
+          mcs -platform:x64 -optimize+ -target:exe -out:build/ZwiftStart.exe ZwiftStart.cs
       # Ensure a PE32+ image for x86-64: "MZ", "PE\0\0", machine 0x8664, optional header magic 0x20b.
       - name: Check PE32+ header
         run: |
-          exe=build/RunFromProcess.exe
+          exe=build/ZwiftStart.exe
           hex() { od -An -tx1 -j"$1" -N"$2" "$exe" | tr -d ' \n'; }
           pe_offset=$((0x$(od -An -tx4 -j60 -N4 "$exe" | tr -d ' ')))
           test "$(hex 0 2)" = 4d5a
@@ -38,11 +40,11 @@ jobs:
       - name: Checksum
         run: |
           cd build
-          sha256sum RunFromProcess.exe > RunFromProcess.exe.sha256
-          cat RunFromProcess.exe.sha256
+          sha256sum ZwiftStart.exe > ZwiftStart.exe.sha256
+          cat ZwiftStart.exe.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: RunFromProcess
+          name: ZwiftStart
           path: build/
           retention-days: 30
 
@@ -59,19 +61,20 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: RunFromProcess
+          name: ZwiftStart
           path: build
       - name: Publish staging pre-release
         run: |
-          notes="RunFromProcess.exe vom aktuellen Stand von main (${GITHUB_SHA::8}). Wird bei jedem Push ersetzt."
+          notes="ZwiftStart.exe vom aktuellen Stand von main (${GITHUB_SHA::8}). Wird bei jedem Push ersetzt."
           if gh release view staging >/dev/null 2>&1; then
-              gh release edit staging --prerelease --target "$GITHUB_SHA" --notes "$notes"
+              # --draft=false: a deleted tag turns the release into a draft.
+              gh release edit staging --draft=false --prerelease --target "$GITHUB_SHA" --notes "$notes"
           else
-              gh release create staging --prerelease --target "$GITHUB_SHA" --title "RunFromProcess staging" --notes "$notes"
+              gh release create staging --prerelease --target "$GITHUB_SHA" --title "ZwiftStart staging" --notes "$notes"
           fi
           # Move the tag to the current commit; release assets are replaced in place.
           gh api -X PATCH "repos/$GH_REPO/git/refs/tags/staging" -f sha="$GITHUB_SHA" -F force=true
-          gh release upload staging build/RunFromProcess.exe build/RunFromProcess.exe.sha256 --clobber
+          gh release upload staging build/ZwiftStart.exe build/ZwiftStart.exe.sha256 --clobber
 
   release:
     if: startsWith(github.ref, 'refs/tags/release/')
@@ -87,16 +90,16 @@ jobs:
         run: echo "$GITHUB_REF_NAME" | grep -Eq '^release/[0-9]+\.[0-9]+\.[0-9]+$'
       - uses: actions/download-artifact@v4
         with:
-          name: RunFromProcess
+          name: ZwiftStart
           path: build
       - name: Publish release
         run: |
           version="${GITHUB_REF_NAME#release/}"
           pages="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}"
-          notes=$(printf 'RunFromProcess.exe %s für Zwift unter Lutris, übersetzt aus %s.\n\nDownload auch über %s/download/%s/' \
+          notes=$(printf 'ZwiftStart.exe %s für Zwift unter Lutris, übersetzt aus %s.\n\nDownload auch über %s/download/%s/' \
               "$version" "${GITHUB_SHA::8}" "$pages" "$version")
-          gh release create "$GITHUB_REF_NAME" --verify-tag --title "RunFromProcess ${version}" --notes "$notes" \
-              build/RunFromProcess.exe build/RunFromProcess.exe.sha256
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "ZwiftStart ${version}" --notes "$notes" \
+              build/ZwiftStart.exe build/ZwiftStart.exe.sha256
 
   pages:
     # One of staging/release is always skipped; run after whichever ran, unless it failed.
@@ -130,24 +133,26 @@ jobs:
           staging_html='<p>Noch keine Staging-Version vorhanden.</p>'
           mkdir -p public/download/staging
           if gh release download staging --dir public/download/staging \
-              --pattern RunFromProcess.exe --pattern RunFromProcess.exe.sha256; then
-              staging_sha=$(cut -d' ' -f1 public/download/staging/RunFromProcess.exe.sha256)
-              staging_html="<p><a class=\"button\" href=\"download/staging/RunFromProcess.exe\">RunFromProcess.exe (staging)</a></p>
-          <p class=\"meta\">Stand von <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/RunFromProcess.exe.sha256\">.sha256</a>)</p>"
+              --pattern ZwiftStart.exe --pattern ZwiftStart.exe.sha256; then
+              staging_sha=$(cut -d' ' -f1 public/download/staging/ZwiftStart.exe.sha256)
+              staging_html="<p><a class=\"button\" href=\"download/staging/ZwiftStart.exe\">ZwiftStart.exe (staging)</a></p>
+          <p class=\"meta\">Stand von <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
           else
               rm -rf public/download/staging
           fi
 
           release_html='<p>Noch kein Release vorhanden.</p>'
-          if [ -n "$latest_tag" ]; then
-              version=${latest_tag#release/}
-              mkdir -p "public/download/${version}"
-              gh release download "$latest_tag" --dir "public/download/${version}" \
-                  --pattern RunFromProcess.exe --pattern RunFromProcess.exe.sha256
+          # Older releases (before ZwiftStart) have no matching assets and are skipped.
+          version=${latest_tag#release/}
+          if [ -n "$latest_tag" ] && mkdir -p "public/download/${version}" \
+              && gh release download "$latest_tag" --dir "public/download/${version}" \
+                  --pattern ZwiftStart.exe --pattern ZwiftStart.exe.sha256; then
               cp -r "public/download/${version}" public/download/latest
-              release_sha=$(cut -d' ' -f1 "public/download/${version}/RunFromProcess.exe.sha256")
-              release_html="<p><a class=\"button\" href=\"download/latest/RunFromProcess.exe\">RunFromProcess.exe ${version}</a></p>
-          <p class=\"meta\">Fester Link: <a href=\"download/${version}/RunFromProcess.exe\">download/${version}/RunFromProcess.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/RunFromProcess.exe.sha256\">.sha256</a>)</p>"
+              release_sha=$(cut -d' ' -f1 "public/download/${version}/ZwiftStart.exe.sha256")
+              release_html="<p><a class=\"button\" href=\"download/latest/ZwiftStart.exe\">ZwiftStart.exe ${version}</a></p>
+          <p class=\"meta\">Fester Link: <a href=\"download/${version}/ZwiftStart.exe\">download/${version}/ZwiftStart.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
+          elif [ -n "$latest_tag" ]; then
+              rm -rf "public/download/${version}"
           fi
 
           printf '%s\n' "$staging_html" > "$RUNNER_TEMP/staging.html"

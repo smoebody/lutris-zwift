@@ -2,48 +2,69 @@ name: Zwift
 game_slug: zwift
 version: Windows (dw-proton)
 slug: zwift-dwproton
-runner: linux
+runner: wine
 
-# Lutris 0.5.22 kann file://-URLs im Abschnitt files nicht laden. Der Installer
-# wird deshalb direkt aus der Quellablage aufgerufen und kopiert die Wrapper
-# selbst nach $GAMEDIR. Ohne files fragt Lutris nur dann nach einem
-# Zielverzeichnis (und setzt $GAMEDIR), wenn game.prefix gesetzt ist.
+# Lutris startet dw-proton als Proton-Build ueber umu. Mit GAMEID umu-zwift
+# fuehrt Proton beim ersten Aufruf den Protonfix fuer Zwift aus: Er setzt
+# PROTON_DLL_COPY und installiert corefonts, dotnet48, d3dcompiler_47 und
+# webview2. ZwiftStart.exe uebernimmt Update, Vollbild-Voreinstellung und den
+# Start von ZwiftApp.exe als Kindprozess des Launchers.
 script:
-  game:
-    exe: $GAMEDIR/start-zwift.sh
-    working_dir: $GAMEDIR
-    prefix: $GAMEDIR
+  files:
+    - setup:
+        url: https://cdn.zwift.com/app/ZwiftSetup.exe
+        filename: ZwiftSetup.exe
+        referer: https://www.zwift.com
+    - zwiftstart:
+        url: https://github.com/smoebody/lutris-zwift/releases/download/release/0.2.0/ZwiftStart.exe
+        filename: ZwiftStart.exe
 
+  game:
+    arch: win64
+    prefix: $GAMEDIR
+    exe: $GAMEDIR/drive_c/Program Files (x86)/Zwift/ZwiftStart.exe
+    working_dir: $GAMEDIR/drive_c/Program Files (x86)/Zwift
+
+  wine:
+    version: dw-proton
+
+  # Lutris 0.5.22 nimmt fuer wineexec-Schritte sonst die globale Wine-Vorgabe
+  # (PROTONPATH=GE-Proton) und nach create_prefix PROTON_VERB=runinprefix, bei
+  # dem der Protonfix uebersprungen wird. Gesetzte Werte ueberschreibt es nicht.
   system:
-    disable_runtime: true
-    prelaunch_command: $GAMEDIR/update-zwift.sh
-    prelaunch_wait: true
     env:
-      WINEPREFIX: $GAMEDIR
+      PROTONPATH: $HOME/.local/share/lutris/runners/wine/dw-proton-x86_64
+      PROTON_VERB: waitforexitandrun
+      GAMEID: umu-zwift
+      UMU_ID: umu-zwift
       WINEDEBUG: fixme-all
 
   installer:
-    - execute:
-        description: dw-proton laden, Wine-Praefix mit dotnet48, WebView2 und Zwift einrichten
-        file: /usr/bin/bash
-        args: >-
-          /home/smoe/Projects/metaccount/multimedia/zwift/install-zwift.sh
-          $GAMEDIR
-          /home/smoe/Projects/metaccount/multimedia/zwift/start-zwift.sh
-          /home/smoe/Projects/metaccount/multimedia/zwift/update-zwift.sh
-          /home/smoe/Projects/metaccount/multimedia/zwift/RunFromProcess.cs
-        disable_runtime: true
+    - task:
+        name: create_prefix
+        description: Wine-Praefix mit dw-proton anlegen
+    - task:
+        name: wineexec
+        description: Zwift-Launcher installieren (vorher installiert der Protonfix dotnet48 und WebView2)
+        executable: setup
+        args: /SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOCANCEL
+    - copy:
+        src: zwiftstart
+        dst: $GAMEDIR/drive_c/Program Files (x86)/Zwift
+    - task:
+        name: wineexec
+        description: Spiel ueber den Zwift-Launcher herunterladen
+        executable: $GAMEDIR/drive_c/Program Files (x86)/Zwift/ZwiftStart.exe
+        args: --update-only
+        working_dir: $GAMEDIR/drive_c/Program Files (x86)/Zwift
 
 notes: |
-  Kein System-Wine noetig: Verwendet wird der Lutris-Wine-Runner dw-proton
-  (~/.local/share/lutris/runners/wine/dw-proton-x86_64). Fehlt er, laedt der
-  Installer dieselbe Version wie Lutris (dwproton-11.0-14, Pruefsumme
-  geprueft). Voraussetzungen sind curl, tar, xz, cabextract, unzip und
-  ntlm_auth (samba-winbind-clients). Als Installationsziel muss ein leeres
-  Verzeichnis ausgewaehlt werden. Die Installation laedt dw-proton,
-  winetricks, dotnet48, WebView2 und Zwift herunter und dauert entsprechend.
+  Verwendet den Lutris-Wine-Runner dw-proton (wird bei Bedarf von Lutris
+  geladen). Die Installation laedt dotnet48, WebView2 und das komplette Spiel
+  (mehrere GB) herunter und dauert entsprechend.
 
-  update-zwift.sh prueft vor dem Spielstart die CDN-Version und wartet bei
-  Bedarf auf SilentLaunch. start-zwift.sh startet ZwiftApp.exe anschliessend
-  ueber RunFromProcess.exe als Kindprozess des Launchers und beendet danach den
-  Launcher. Die Anmeldung erfolgt ohne API-Token direkt im Zwift-Anmeldefenster.
+  ZwiftStart.exe (Quelltext: https://github.com/smoebody/lutris-zwift) prueft
+  vor jedem Start die Zwift-Version und aktualisiert bei Bedarf, stellt beim
+  ersten Start Vollbild ein und startet ZwiftApp.exe als Kindprozess des
+  Launchers. Protokoll: drive_c/Program Files (x86)/Zwift/ZwiftStart.log.
+  Die Anmeldung erfolgt direkt im Spiel.

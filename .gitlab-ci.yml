@@ -8,8 +8,8 @@ variables:
   ALPINE_IMAGE: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/alpine:3
   # The dependency proxy only mirrors Docker Hub.
   GLAB_IMAGE: registry.gitlab.com/gitlab-org/cli:latest
-  PACKAGE_NAME: runfromprocess
-  PACKAGE_URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/runfromprocess
+  PACKAGE_NAME: zwiftstart
+  PACKAGE_URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/zwiftstart
   RELEASE_TAG_PATTERN: /^release\/\d+\.\d+\.\d+$/
 
 workflow:
@@ -28,18 +28,18 @@ build:
   image: ${MONO_IMAGE}
   script:
     - mkdir -p build
-    - mcs -platform:x64 -optimize+ -target:exe -out:build/RunFromProcess.exe RunFromProcess.cs
+    - mcs -platform:x64 -optimize+ -target:exe -out:build/ZwiftStart.exe ZwiftStart.cs
     # Ensure a PE32+ image for x86-64: "MZ", "PE\0\0", machine 0x8664, optional header magic 0x20b.
     - |
-      exe=build/RunFromProcess.exe
+      exe=build/ZwiftStart.exe
       hex() { od -An -tx1 -j"$1" -N"$2" "$exe" | tr -d ' \n'; }
       pe_offset=$((0x$(od -An -tx4 -j60 -N4 "$exe" | tr -d ' ')))
       test "$(hex 0 2)" = 4d5a
       test "$(hex "$pe_offset" 4)" = 50450000
       test "$(hex $((pe_offset + 4)) 2)" = 6486
       test "$(hex $((pe_offset + 24)) 2)" = 0b02
-    - (cd build && sha256sum RunFromProcess.exe > RunFromProcess.exe.sha256)
-    - cat build/RunFromProcess.exe.sha256
+    - (cd build && sha256sum ZwiftStart.exe > ZwiftStart.exe.sha256)
+    - cat build/ZwiftStart.exe.sha256
   artifacts:
     expire_in: 1 month
     paths:
@@ -53,7 +53,7 @@ build:
     GIT_STRATEGY: none
   script:
     - |
-      for file in RunFromProcess.exe RunFromProcess.exe.sha256; do
+      for file in ZwiftStart.exe ZwiftStart.exe.sha256; do
           curl --fail --silent --show-error \
               --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
               --upload-file "build/${file}" \
@@ -90,22 +90,22 @@ release:
     - echo "Release ${VERSION} (${CI_COMMIT_TAG})"
   release:
     tag_name: $CI_COMMIT_TAG
-    name: RunFromProcess $VERSION
+    name: ZwiftStart $VERSION
     description: >-
-      RunFromProcess.exe ${VERSION} für Zwift unter Lutris/WineHQ, übersetzt aus ${CI_COMMIT_SHORT_SHA}.
+      ZwiftStart.exe ${VERSION} für Zwift unter Lutris (dw-proton), übersetzt aus ${CI_COMMIT_SHORT_SHA}.
       Download auch über ${CI_PAGES_URL}/download/${VERSION}/
     assets:
       links:
-        - name: RunFromProcess.exe
-          url: ${CI_PAGES_URL}/download/${VERSION}/RunFromProcess.exe
+        - name: ZwiftStart.exe
+          url: ${CI_PAGES_URL}/download/${VERSION}/ZwiftStart.exe
           link_type: package
-          direct_asset_path: /RunFromProcess.exe
-        - name: RunFromProcess.exe.sha256
-          url: ${CI_PAGES_URL}/download/${VERSION}/RunFromProcess.exe.sha256
+          direct_asset_path: /ZwiftStart.exe
+        - name: ZwiftStart.exe.sha256
+          url: ${CI_PAGES_URL}/download/${VERSION}/ZwiftStart.exe.sha256
           link_type: other
-          direct_asset_path: /RunFromProcess.exe.sha256
-        - name: RunFromProcess.exe (Paket-Registry)
-          url: ${PACKAGE_URL}/${VERSION}/RunFromProcess.exe
+          direct_asset_path: /ZwiftStart.exe.sha256
+        - name: ZwiftStart.exe (Paket-Registry)
+          url: ${PACKAGE_URL}/${VERSION}/ZwiftStart.exe
           link_type: package
   rules:
     - if: $CI_COMMIT_TAG =~ $RELEASE_TAG_PATTERN
@@ -138,25 +138,27 @@ pages:
 
       staging_html='<p>Noch keine Staging-Version vorhanden.</p>'
       mkdir -p public/download/staging
-      if fetch staging/RunFromProcess.exe public/download/staging/RunFromProcess.exe \
-          && fetch staging/RunFromProcess.exe.sha256 public/download/staging/RunFromProcess.exe.sha256; then
-          staging_sha=$(cut -d' ' -f1 public/download/staging/RunFromProcess.exe.sha256)
-          staging_html="<p><a class=\"button\" href=\"download/staging/RunFromProcess.exe\">RunFromProcess.exe (staging)</a></p>
-      <p class=\"meta\">Stand von <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/RunFromProcess.exe.sha256\">.sha256</a>)</p>"
+      if fetch staging/ZwiftStart.exe public/download/staging/ZwiftStart.exe \
+          && fetch staging/ZwiftStart.exe.sha256 public/download/staging/ZwiftStart.exe.sha256; then
+          staging_sha=$(cut -d' ' -f1 public/download/staging/ZwiftStart.exe.sha256)
+          staging_html="<p><a class=\"button\" href=\"download/staging/ZwiftStart.exe\">ZwiftStart.exe (staging)</a></p>
+      <p class=\"meta\">Stand von <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
       else
           rm -rf public/download/staging
       fi
 
       release_html='<p>Noch kein Release vorhanden.</p>'
-      if [ -n "$latest_tag" ]; then
-          version=${latest_tag#release/}
-          mkdir -p "public/download/${version}"
-          fetch "${version}/RunFromProcess.exe" "public/download/${version}/RunFromProcess.exe"
-          fetch "${version}/RunFromProcess.exe.sha256" "public/download/${version}/RunFromProcess.exe.sha256"
+      # Older releases (before ZwiftStart) have no matching package and are skipped.
+      version=${latest_tag#release/}
+      if [ -n "$latest_tag" ] && mkdir -p "public/download/${version}" \
+          && fetch "${version}/ZwiftStart.exe" "public/download/${version}/ZwiftStart.exe" \
+          && fetch "${version}/ZwiftStart.exe.sha256" "public/download/${version}/ZwiftStart.exe.sha256"; then
           cp -r "public/download/${version}" public/download/latest
-          release_sha=$(cut -d' ' -f1 "public/download/${version}/RunFromProcess.exe.sha256")
-          release_html="<p><a class=\"button\" href=\"download/latest/RunFromProcess.exe\">RunFromProcess.exe ${version}</a></p>
-      <p class=\"meta\">Fester Link: <a href=\"download/${version}/RunFromProcess.exe\">download/${version}/RunFromProcess.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/RunFromProcess.exe.sha256\">.sha256</a>)</p>"
+          release_sha=$(cut -d' ' -f1 "public/download/${version}/ZwiftStart.exe.sha256")
+          release_html="<p><a class=\"button\" href=\"download/latest/ZwiftStart.exe\">ZwiftStart.exe ${version}</a></p>
+      <p class=\"meta\">Fester Link: <a href=\"download/${version}/ZwiftStart.exe\">download/${version}/ZwiftStart.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
+      elif [ -n "$latest_tag" ]; then
+          rm -rf "public/download/${version}"
       fi
 
       printf '%s\n' "$staging_html" > /tmp/staging.html

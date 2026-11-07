@@ -3,18 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Zwift unter Lutris/WineHQ</title>
+    <title>Zwift unter Lutris</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
-    <h1>Zwift unter Lutris/WineHQ</h1>
-    <p>Installations-, Update- und Startskripte für die Windows-Version von Zwift unter Linux. Verwendet wird der Lutris-Wine-Runner <code>dw-proton</code>; ein System-Wine ist nicht nötig. Lutris startet einen Linux-Wrapper, der Installer richtet das Wine-Präfix selbst ein.</p>
+    <h1>Zwift unter Lutris</h1>
+    <p>Lutris-Installer für die Windows-Version von Zwift unter Linux. Zwift läuft im Lutris-Runner <code>wine</code> mit <code>dw-proton</code>; ein System-Wine ist nicht nötig.</p>
 
-    <h2>RunFromProcess.exe</h2>
-    <p>Kleines Hilfsprogramm, das <code>ZwiftApp.exe</code> als Kindprozess des Zwift-Launchers startet. Nur so lädt das Spiel unter Wine und zeigt das Anmeldefenster.</p>
-    <pre>RunFromProcess.exe &lt;ppid&gt; &lt;kommandozeile ...&gt;</pre>
-    <p>Benötigt .NET Framework 4.x im Präfix (winetricks <code>dotnet48</code>). Der Installer übersetzt das Programm auch selbst; die Downloads hier sind für manuelle Installationen gedacht.</p>
+    <h2>ZwiftStart.exe</h2>
+    <p>Startprogramm im Zwift-Verzeichnis: prüft die Version gegen das Zwift-CDN und aktualisiert bei Bedarf, stellt beim ersten Start Vollbild ein und startet <code>ZwiftApp.exe</code> als Kindprozess des Zwift-Launchers. Nur so lädt das Spiel unter Wine und zeigt das Anmeldefenster.</p>
+    <pre>ZwiftStart.exe [--update-only | --no-update]</pre>
+    <p>Benötigt .NET Framework 4.x im Präfix (winetricks <code>dotnet48</code>). Der Lutris-Installer lädt die Datei aus dem GitHub-Release.</p>
 
     <h3>Aktuelles Release</h3>
 @RELEASE@
@@ -24,9 +24,8 @@
 
     <h2>Voraussetzungen</h2>
     <ul>
-        <li>Lutris</li>
-        <li><code>curl</code>, <code>sha256sum</code>, <code>tar</code>, <code>xz</code>, <code>cabextract</code>, <code>unzip</code>, <code>ntlm_auth</code>, GNU <code>grep</code></li>
-        <li>dw-proton lädt der Installer bei Bedarf selbst (gleiche Version wie in Lutris)</li>
+        <li>Lutris 0.5.22 oder neuer</li>
+        <li>Den Wine-Runner <code>dw-proton</code> lädt Lutris bei Bedarf selbst</li>
     </ul>
 
     <h2>Quelltext</h2>
