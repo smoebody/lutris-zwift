@@ -18,6 +18,7 @@ script:
     - zwiftstart:
         url: https://github.com/smoebody/lutris-zwift/releases/download/release/0.2.0/ZwiftStart.exe
         filename: ZwiftStart.exe
+        checksum: sha256:b990b095a4f204c4a356fd212f87204dab5211eb6d1fb364d89af81345aa3c7a
 
   game:
     arch: win64
