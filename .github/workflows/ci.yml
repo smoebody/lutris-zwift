@@ -65,7 +65,7 @@ jobs:
           path: build
       - name: Publish staging pre-release
         run: |
-          notes="ZwiftStart.exe vom aktuellen Stand von main (${GITHUB_SHA::8}). Wird bei jedem Push ersetzt."
+          notes="ZwiftStart.exe built from the current main (${GITHUB_SHA::8}). Replaced on every push."
           if gh release view staging >/dev/null 2>&1; then
               # --draft=false: a deleted tag turns the release into a draft.
               gh release edit staging --draft=false --prerelease --target "$GITHUB_SHA" --notes "$notes"
@@ -96,7 +96,7 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#release/}"
           pages="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}"
-          notes=$(printf 'ZwiftStart.exe %s für Zwift unter Lutris, übersetzt aus %s.\n\nDownload auch über %s/download/%s/' \
+          notes=$(printf 'ZwiftStart.exe %s for Zwift on Lutris (dw-proton), built from %s.\n\nAlso available at %s/download/%s/' \
               "$version" "${GITHUB_SHA::8}" "$pages" "$version")
           gh release create "$GITHUB_REF_NAME" --verify-tag --title "ZwiftStart ${version}" --notes "$notes" \
               build/ZwiftStart.exe build/ZwiftStart.exe.sha256
@@ -128,20 +128,20 @@ jobs:
           set -eu
           latest_tag=$(git tag --list 'release/*' | grep -E '^release/[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
 
-          rm -rf public && cp -r public-src public
+          rm -rf public && cp -r public-src public && cp zwift-lutris.yml public/
 
-          staging_html='<p>Noch keine Staging-Version vorhanden.</p>'
+          staging_html='<p>No staging build available yet.</p>'
           mkdir -p public/download/staging
           if gh release download staging --dir public/download/staging \
               --pattern ZwiftStart.exe --pattern ZwiftStart.exe.sha256; then
               staging_sha=$(cut -d' ' -f1 public/download/staging/ZwiftStart.exe.sha256)
               staging_html="<p><a class=\"button\" href=\"download/staging/ZwiftStart.exe\">ZwiftStart.exe (staging)</a></p>
-          <p class=\"meta\">Stand von <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
+          <p class=\"meta\">Built from <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
           else
               rm -rf public/download/staging
           fi
 
-          release_html='<p>Noch kein Release vorhanden.</p>'
+          release_html='<p>No release available yet.</p>'
           # Older releases (before ZwiftStart) have no matching assets and are skipped.
           version=${latest_tag#release/}
           if [ -n "$latest_tag" ] && mkdir -p "public/download/${version}" \
@@ -150,7 +150,7 @@ jobs:
               cp -r "public/download/${version}" public/download/latest
               release_sha=$(cut -d' ' -f1 "public/download/${version}/ZwiftStart.exe.sha256")
               release_html="<p><a class=\"button\" href=\"download/latest/ZwiftStart.exe\">ZwiftStart.exe ${version}</a></p>
-          <p class=\"meta\">Fester Link: <a href=\"download/${version}/ZwiftStart.exe\">download/${version}/ZwiftStart.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
+          <p class=\"meta\">Permanent link: <a href=\"download/${version}/ZwiftStart.exe\">download/${version}/ZwiftStart.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
           elif [ -n "$latest_tag" ]; then
               rm -rf "public/download/${version}"
           fi

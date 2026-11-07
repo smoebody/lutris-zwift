@@ -46,3 +46,24 @@ pre {
     font-size: 0.85em;
     opacity: 0.75;
 }
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.5rem 0 1rem;
+}
+
+th, td {
+    border: 1px solid rgba(127, 127, 127, 0.35);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: rgba(127, 127, 127, 0.15);
+}
+
+li > p {
+    margin: 0.4rem 0;
+}

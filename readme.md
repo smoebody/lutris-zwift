@@ -19,12 +19,15 @@ Die Windows-Programmdateien, das Wine-Präfix, Zugangsdaten und Logs sind nicht 
 
 ## Voraussetzungen
 
-- Lutris 0.5.22 oder neuer (getestet mit dem Fedora-Paket, nicht mit Flatpak)
-- Internetzugang während der Installation; es werden mehrere GB geladen
+- Lutris 0.5.22 oder neuer aus dem Paket der Distribution. **Flatpak-Lutris wird nicht unterstützt** (der Proton-Pfad in `system.env` zeigt auf `~/.local/share/lutris/…`).
+- Etwa 12 GB freier Speicher (Präfix mit Spiel ca. 9 GB, dw-proton 1,6 GB, Steam-Runtime 1,5 GB), besser 15 GB
+- Internetzugang während der Installation; Dauer je nach Verbindung 15–60 Minuten
 
 ## Installation über Lutris
 
-1. In Lutris **+ → Install from a local install script** wählen und [zwift-lutris.yml](zwift-lutris.yml) öffnen.
+Die englische Anleitung mit Fehlerbehebung steht auf der Projektseite: <https://smoebody.github.io/lutris-zwift/> (dort auch der Download von `zwift-lutris.yml`).
+
+1. In Lutris **+ → Install from a local install script** („Installiere von einem lokalen Installationsskript“) wählen und [zwift-lutris.yml](zwift-lutris.yml) öffnen.
 2. Als Ziel ein **neues, leeres Verzeichnis** wählen.
 3. Nach der Installation den Eintrag **Zwift** starten. Er steht unter dem Runner **Wine**.
 
@@ -43,7 +46,7 @@ ZwiftStart.exe [--update-only | --no-update]
 
 Bei jedem Start:
 
-1. Vergleicht die installierte Version mit `Zwift_ver_cur.xml` vom Zwift-CDN. Bei einer neuen Version startet es `ZwiftLauncher.exe SilentLaunch` und wartet bis zu fünf Minuten auf das Update. Ist das CDN nicht erreichbar, startet es die installierte Version.
+1. Vergleicht die installierte Version mit `Zwift_ver_cur.xml` vom Zwift-CDN. Bei einer neuen Version startet es `ZwiftLauncher.exe SilentLaunch` und wartet bis zu 60 Minuten auf das Update (bei der Erstinstallation das ganze Spiel). Ist das CDN nicht erreichbar, startet es die installierte Version.
 2. Legt die Standardordner im Windows-Benutzerprofil an. Fehlen sie, beendet sich `ZwiftApp.exe` sofort.
 3. Setzt in `AppData\Local\Zwift\prefs.xml` `<FULLSCREEN>1</FULLSCREEN>`, aber nur, wenn der Schlüssel fehlt. Eine Umstellung im Spiel bleibt also erhalten.
 4. Startet den Launcher und `ZwiftApp.exe` als dessen Kindprozess. Sobald das Spiel `Legacy Launcher Used` ins Log schreibt, wird der Launcher beendet.

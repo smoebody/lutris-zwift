@@ -92,8 +92,8 @@ release:
     tag_name: $CI_COMMIT_TAG
     name: ZwiftStart $VERSION
     description: >-
-      ZwiftStart.exe ${VERSION} für Zwift unter Lutris (dw-proton), übersetzt aus ${CI_COMMIT_SHORT_SHA}.
-      Download auch über ${CI_PAGES_URL}/download/${VERSION}/
+      ZwiftStart.exe ${VERSION} for Zwift on Lutris (dw-proton), built from ${CI_COMMIT_SHORT_SHA}.
+      Also available at ${CI_PAGES_URL}/download/${VERSION}/
     assets:
       links:
         - name: ZwiftStart.exe
@@ -134,20 +134,20 @@ pages:
       git fetch --quiet --force --tags origin
       latest_tag=$(git tag --list 'release/*' | grep -E '^release/[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
 
-      rm -rf public && cp -r public-src public
+      rm -rf public && cp -r public-src public && cp zwift-lutris.yml public/
 
-      staging_html='<p>Noch keine Staging-Version vorhanden.</p>'
+      staging_html='<p>No staging build available yet.</p>'
       mkdir -p public/download/staging
       if fetch staging/ZwiftStart.exe public/download/staging/ZwiftStart.exe \
           && fetch staging/ZwiftStart.exe.sha256 public/download/staging/ZwiftStart.exe.sha256; then
           staging_sha=$(cut -d' ' -f1 public/download/staging/ZwiftStart.exe.sha256)
           staging_html="<p><a class=\"button\" href=\"download/staging/ZwiftStart.exe\">ZwiftStart.exe (staging)</a></p>
-      <p class=\"meta\">Stand von <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
+      <p class=\"meta\">Built from <code>main</code>, SHA-256 <code>${staging_sha}</code> (<a href=\"download/staging/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
       else
           rm -rf public/download/staging
       fi
 
-      release_html='<p>Noch kein Release vorhanden.</p>'
+      release_html='<p>No release available yet.</p>'
       # Older releases (before ZwiftStart) have no matching package and are skipped.
       version=${latest_tag#release/}
       if [ -n "$latest_tag" ] && mkdir -p "public/download/${version}" \
@@ -156,7 +156,7 @@ pages:
           cp -r "public/download/${version}" public/download/latest
           release_sha=$(cut -d' ' -f1 "public/download/${version}/ZwiftStart.exe.sha256")
           release_html="<p><a class=\"button\" href=\"download/latest/ZwiftStart.exe\">ZwiftStart.exe ${version}</a></p>
-      <p class=\"meta\">Fester Link: <a href=\"download/${version}/ZwiftStart.exe\">download/${version}/ZwiftStart.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
+      <p class=\"meta\">Permanent link: <a href=\"download/${version}/ZwiftStart.exe\">download/${version}/ZwiftStart.exe</a>, SHA-256 <code>${release_sha}</code> (<a href=\"download/${version}/ZwiftStart.exe.sha256\">.sha256</a>)</p>"
       elif [ -n "$latest_tag" ]; then
           rm -rf "public/download/${version}"
       fi
@@ -169,7 +169,7 @@ pages:
           -e "s|@COMMIT@|${CI_COMMIT_SHORT_SHA}|g" \
           -e "s|@DATE@|$(date -u '+%Y-%m-%d %H:%M UTC')|g" \
           -e "s|@PROJECT_URL@|${CI_PROJECT_URL}|g" \
-          -e "s|@PROJECT_NOTE@| (Anmeldung erforderlich)|g" \
+          -e "s|@PROJECT_NOTE@| (login required)|g" \
           public/index.html
       find public -type f | sort
   artifacts:

@@ -4,11 +4,12 @@ version: Windows (dw-proton)
 slug: zwift-dwproton
 runner: wine
 
-# Lutris startet dw-proton als Proton-Build ueber umu. Mit GAMEID umu-zwift
-# fuehrt Proton beim ersten Aufruf den Protonfix fuer Zwift aus: Er setzt
-# PROTON_DLL_COPY und installiert corefonts, dotnet48, d3dcompiler_47 und
-# webview2. ZwiftStart.exe uebernimmt Update, Vollbild-Voreinstellung und den
-# Start von ZwiftApp.exe als Kindprozess des Launchers.
+# Lutris runs dw-proton as a Proton build through umu. With GAMEID umu-zwift,
+# Proton applies the Zwift protonfix on first run: it sets PROTON_DLL_COPY and
+# installs corefonts, dotnet48, d3dcompiler_47 and webview2. ZwiftStart.exe
+# handles updates, the fullscreen default and starting ZwiftApp.exe as a child
+# process of the launcher.
+# Source and instructions: https://github.com/smoebody/lutris-zwift
 script:
   files:
     - setup:
@@ -29,9 +30,9 @@ script:
   wine:
     version: dw-proton
 
-  # Lutris 0.5.22 nimmt fuer wineexec-Schritte sonst die globale Wine-Vorgabe
-  # (PROTONPATH=GE-Proton) und nach create_prefix PROTON_VERB=runinprefix, bei
-  # dem der Protonfix uebersprungen wird. Gesetzte Werte ueberschreibt es nicht.
+  # Otherwise Lutris 0.5.22 uses the global Wine default (PROTONPATH=GE-Proton)
+  # for wineexec steps, and PROTON_VERB=runinprefix after create_prefix, which
+  # skips the protonfix. Lutris does not override values set here.
   system:
     env:
       PROTONPATH: $HOME/.local/share/lutris/runners/wine/dw-proton-x86_64
@@ -43,10 +44,10 @@ script:
   installer:
     - task:
         name: create_prefix
-        description: Wine-Praefix mit dw-proton anlegen
+        description: Create the Wine prefix with dw-proton
     - task:
         name: wineexec
-        description: Zwift-Launcher installieren (vorher installiert der Protonfix dotnet48 und WebView2)
+        description: Install the Zwift launcher (the protonfix installs dotnet48 and WebView2 first)
         executable: setup
         args: /SP- /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOCANCEL
     - copy:
@@ -54,18 +55,19 @@ script:
         dst: $GAMEDIR/drive_c/Program Files (x86)/Zwift
     - task:
         name: wineexec
-        description: Spiel ueber den Zwift-Launcher herunterladen
+        description: Download the game via the Zwift launcher
         executable: $GAMEDIR/drive_c/Program Files (x86)/Zwift/ZwiftStart.exe
         args: --update-only
         working_dir: $GAMEDIR/drive_c/Program Files (x86)/Zwift
 
 notes: |
-  Verwendet den Lutris-Wine-Runner dw-proton (wird bei Bedarf von Lutris
-  geladen). Die Installation laedt dotnet48, WebView2 und das komplette Spiel
-  (mehrere GB) herunter und dauert entsprechend.
+  Uses the Lutris Wine runner dw-proton (downloaded by Lutris if missing).
+  Requires about 12 GB of free disk space. The installation downloads
+  dotnet48, WebView2 and the complete game and takes 15-60 minutes.
+  The Flatpak version of Lutris is not supported.
 
-  ZwiftStart.exe (Quelltext: https://github.com/smoebody/lutris-zwift) prueft
-  vor jedem Start die Zwift-Version und aktualisiert bei Bedarf, stellt beim
-  ersten Start Vollbild ein und startet ZwiftApp.exe als Kindprozess des
-  Launchers. Protokoll: drive_c/Program Files (x86)/Zwift/ZwiftStart.log.
-  Die Anmeldung erfolgt direkt im Spiel.
+  ZwiftStart.exe (source: https://github.com/smoebody/lutris-zwift) checks
+  the Zwift version before every start and updates if needed, sets fullscreen
+  as default on first start and starts ZwiftApp.exe as a child process of the
+  launcher. Log: drive_c/Program Files (x86)/Zwift/ZwiftStart.log.
+  Log in directly in the game.

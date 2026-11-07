@@ -16,7 +16,9 @@ internal static class ZwiftStart
 {
     private const string VersionUrl = "https://cdn.zwift.com/gameassets/Zwift_Updates_Root/Zwift_ver_cur.xml";
     private const int UpdatePollSeconds = 5;
-    private const int UpdatePollCount = 60;
+    // Bei der Erstinstallation laedt der Launcher das ganze Spiel (mehrere GB).
+    private const int UpdateTimeoutMinutes = 60;
+    private const int UpdatePollCount = UpdateTimeoutMinutes * 60 / UpdatePollSeconds;
 
     private static readonly string ZwiftDir = AppDomain.CurrentDomain.BaseDirectory;
     // Unter umu/Proton erscheint die Konsolenausgabe nicht; daher zusaetzlich in eine Datei.
@@ -93,7 +95,7 @@ internal static class ZwiftStart
             updated = CurrentVersion();
         }
         if (updated == current)
-            throw new ApplicationException("Zeitueberschreitung beim Zwift-Update.");
+            throw new ApplicationException("Zeitueberschreitung beim Zwift-Update (" + UpdateTimeoutMinutes + " Minuten).");
         if (updated != latest)
             throw new ApplicationException("Unerwartete Zwift-Version nach dem Update: " + updated + " statt " + latest);
         Log("Zwift wurde auf Version " + updated + " aktualisiert.");

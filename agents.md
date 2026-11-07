@@ -19,7 +19,7 @@ Die Anmeldung findet ausschließlich im Spiel statt. Keine API-Tokens oder Zugan
 | [readme.md](readme.md) | Installation, Ablauf, Build und Releases |
 | [.gitlab-ci.yml](.gitlab-ci.yml) | GitLab-CI: `build` (Mono `mcs`), `package_staging`/`package_release` (Generic Package Registry `zwiftstart`), `release`, `pages` |
 | [.github/workflows/ci.yml](.github/workflows/ci.yml) | GitHub Actions mit derselben Logik: `build`, `staging` (wanderndes Pre-Release `staging`), `release`, `pages` |
-| [public-src/](public-src/) | Pages-Vorlage für beide Plattformen; Platzhalter `@RELEASE@`, `@STAGING@`, `@COMMIT@`, `@DATE@`, `@PROJECT_URL@`, `@PROJECT_NOTE@` ersetzt der jeweilige `pages`-Job |
+| [public-src/](public-src/) | Pages-Vorlage für beide Plattformen; Platzhalter `@RELEASE@`, `@STAGING@`, `@COMMIT@`, `@DATE@`, `@PROJECT_URL@`, `@PROJECT_NOTE@` ersetzt der jeweilige `pages`-Job. Seite auf Englisch mit Anleitung, Speicherbedarf und Fehlerbehebung; der `pages`-Job kopiert `zwift-lutris.yml` mit auf die Seite |
 
 Die früheren Bash-Wrapper (`install-zwift.sh`, `start-zwift.sh`, `update-zwift.sh`) und `RunFromProcess.cs` (Runner `linux`, Wine ohne umu) wurden am 7. November 2026 entfernt; sie liegen im Git-Verlauf und im Release 0.1.0.
 
@@ -51,7 +51,7 @@ In die Quellablage gehört nur der C#-Quelltext, keine übersetzte `.exe`.
 
 - Proton legt `drive_c/users/steamuser` und `drive_c/users/$USER` an; Windows-Programme sehen `steamuser`.
 - Unter umu sehen sich Prozesse desselben Präfixes (`Process.GetProcessesByName`, Elternprozess-Trick funktionieren).
-- `ZwiftSetup.exe` installiert nur den Launcher (Version `0.0.0`); das Spiel kommt über `ZwiftStart.exe --update-only` (höchstens 60 × 5 s Wartezeit).
+- `ZwiftSetup.exe` installiert nur den Launcher (Version `0.0.0`); das Spiel kommt über `ZwiftStart.exe --update-only` (höchstens 60 Minuten Wartezeit, `UpdateTimeoutMinutes`).
 - Ohne Elternprozess-Umweg funktioniert der Start nicht: `ZwiftApp.exe` allein startet den Launcher und beendet sich; neben einem Launcher, aber nicht als sein Kindprozess, lädt es nichts.
 - Der Launcher darf erst beendet werden, wenn `AppData\Local\Zwift\Logs\Log.txt` `Legacy Launcher Used` enthält; sonst endet `ZwiftApp.exe` nach etwa 5 s ohne `Log.txt`.
 - Vollbild: `ZWIFT\CONFIG\FULLSCREEN` in `AppData\Local\Zwift\prefs.xml`. `ZwiftStart.exe` setzt `1` nur, wenn der Schlüssel fehlt.
@@ -109,7 +109,7 @@ Zwift hat dort bereits eine Spielseite (`zwift`, ID 30983) mit zwei Installern (
 2. Auf <https://lutris.net/games/zwift/> „Add installer“ wählen. Den Inhalt von `script:` aus `zwift-lutris.yml` einfügen (ohne `name`, `game_slug`, `slug`, `runner` – diese Felder setzt das Formular). Dazu Runner `wine`, Version (z. B. „dw-proton“), Beschreibung und Notes ausfüllen.
 3. Moderatoren prüfen den Entwurf; erst danach ist er für alle sichtbar. Änderungen gehen als neue Revision wieder durch die Prüfung.
 
-Voraussetzungen: nur öffentliche URLs mit `checksum` (außer `ZwiftSetup.exe`, das sich ändert), keine lokalen Pfade. `$HOME` in `PROTONPATH` ist an den Lutris-Runner-Pfad gebunden; bei Flatpak-Lutris ist dieser anders.
+Voraussetzungen: nur öffentliche URLs mit `checksum` (außer `ZwiftSetup.exe`, das sich ändert), keine lokalen Pfade. `$HOME` in `PROTONPATH` ist an den Lutris-Runner-Pfad gebunden; bei Flatpak-Lutris ist dieser anders. Flatpak-Lutris ist daher als nicht unterstützt dokumentiert.
 
 ## Getesteter Stand
 
