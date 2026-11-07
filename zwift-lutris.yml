@@ -1,0 +1,47 @@
+name: Zwift
+game_slug: zwift
+version: Windows (WineHQ)
+slug: zwift-wine-native
+runner: linux
+
+# Lutris 0.5.22 kann file://-URLs im Abschnitt files nicht laden. Der Installer
+# wird deshalb direkt aus der Quellablage aufgerufen und kopiert die Wrapper
+# selbst nach $GAMEDIR. Ohne files fragt Lutris nur dann nach einem
+# Zielverzeichnis (und setzt $GAMEDIR), wenn game.prefix gesetzt ist.
+script:
+  game:
+    exe: $GAMEDIR/start-zwift.sh
+    working_dir: $GAMEDIR
+    prefix: $GAMEDIR
+
+  system:
+    disable_runtime: true
+    prelaunch_command: $GAMEDIR/update-zwift.sh
+    prelaunch_wait: true
+    env:
+      WINEPREFIX: $GAMEDIR
+      WINEDEBUG: fixme-all
+
+  installer:
+    - execute:
+        description: Wine-Praefix mit dotnet48, WebView2 und Zwift einrichten
+        file: /usr/bin/bash
+        args: >-
+          /home/smoe/Projects/metaccount/multimedia/zwift/install-zwift-winehq.sh
+          $GAMEDIR
+          /home/smoe/Projects/metaccount/multimedia/zwift/start-zwift.sh
+          /home/smoe/Projects/metaccount/multimedia/zwift/update-zwift.sh
+          /home/smoe/Projects/metaccount/multimedia/zwift/RunFromProcess.cs
+        disable_runtime: true
+
+notes: |
+  Voraussetzungen sind System-Wine (Fedora: Paket wine, inklusive
+  wine-common), curl, cabextract, unzip und ntlm_auth
+  (samba-winbind-clients). Als Installationsziel muss ein leeres Verzeichnis
+  ausgewaehlt werden. Die Installation laedt winetricks, dotnet48, WebView2
+  und Zwift herunter und dauert entsprechend.
+
+  update-zwift.sh prueft vor dem Spielstart die CDN-Version und wartet bei
+  Bedarf auf SilentLaunch. start-zwift.sh startet ZwiftApp.exe anschliessend
+  ueber RunFromProcess.exe als Kindprozess des Launchers und beendet danach den
+  Launcher. Die Anmeldung erfolgt ohne API-Token direkt im Zwift-Anmeldefenster.
