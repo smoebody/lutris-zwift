@@ -14,6 +14,8 @@ Die bisherige produktive Installation liegt außerhalb dieses Projektverzeichnis
 | [start-zwift.sh](start-zwift.sh) | Startet `ZwiftApp.exe` über den Launcher und `RunFromProcess.exe` |
 | [RunFromProcess.cs](RunFromProcess.cs) | Quelltext des Hilfsprogramms, das `ZwiftApp.exe` als Kindprozess des Launchers startet |
 | [agents.md](agents.md) | Technische Pfade, Wartungsregeln und Prüfbefehle |
+| [.gitlab-ci.yml](.gitlab-ci.yml) | Übersetzt `RunFromProcess.exe`, veröffentlicht Pakete, Releases und die Projektseite |
+| [public-src/](public-src/) | Vorlage der statischen Projektseite (GitLab Pages) |
 
 Die Windows-Programmdateien, das Wine-Präfix, Zugangsdaten und Logs sind nicht Bestandteil dieser Quellablage.
 
@@ -96,6 +98,30 @@ Nur als Kindprozess des Launchers lädt das Spiel und zeigt das Anmeldefenster. 
 - **Vollständige Benutzerprofilordner:** Der Startwrapper legt unter `drive_c/users/$USER` unter anderem `Documents`, `Downloads` und `Saved Games` an. Fehlen sie, beendet sich `ZwiftApp.exe` sofort wieder.
 - **`LC_ALL=C` für `tasklist`:** Die PID-Erkennung erwartet die englische Ausgabe `PID:` und funktioniert dadurch auch mit deutscher Systemgebietsschema-Einstellung.
 - **Getrennte Präfixe:** Proton und WineHQ werden nicht im selben Präfix eingesetzt oder nacheinander darauf angewendet.
+
+## Build und Releases
+
+Die GitLab-Pipeline übersetzt `RunFromProcess.cs` mit Mono `mcs -platform:x64` (Image `mono:6.12`) und prüft, ob eine PE32+-Datei für x86-64 entstanden ist.
+
+- **Push auf `main`:** Upload als Staging-Version in die Generic Package Registry (Paket `runfromprocess`, Version `staging`), danach Aktualisierung der Projektseite.
+- **Tag `release/X.Y.Z`:** Upload als Paketversion `X.Y.Z`, GitLab-Release `RunFromProcess X.Y.Z` und Aktualisierung der Projektseite.
+
+Release anlegen:
+
+```bash
+git tag release/1.0.0
+git push origin release/1.0.0
+```
+
+Die Projektseite unter <https://multimedia.pages.metaccount.de/zwift> liefert die Programmdatei selbst aus:
+
+| Download | Pfad |
+|---|---|
+| Neuestes Release | `download/latest/RunFromProcess.exe` |
+| Bestimmtes Release (nur das neueste) | `download/X.Y.Z/RunFromProcess.exe` |
+| Staging (`main`) | `download/staging/RunFromProcess.exe` |
+
+Zu jeder Datei gibt es eine `.sha256`-Prüfsumme. Ältere Releases liegen in der Paket-Registry des Projekts.
 
 ## Statische Prüfung
 

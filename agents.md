@@ -23,6 +23,9 @@ Die Anmeldung findet ausschließlich im Spiel statt. Keine API-Tokens oder Zugan
 | [RunFromProcess.cs](RunFromProcess.cs) | C#-Ersatz für `runfromprocess-rs`: `RunFromProcess.exe <ppid> <kommandozeile>` startet ein Programm mit `PROC_THREAD_ATTRIBUTE_PARENT_PROCESS` |
 | [readme.md](readme.md) | Voraussetzungen, Installation, Start, Updateverhalten und Anmeldung |
 
+| [.gitlab-ci.yml](.gitlab-ci.yml) | CI: `build` (Mono `mcs`), `package_staging`/`package_release` (Generic Package Registry `runfromprocess`), `release`, `pages` |
+| [public-src/](public-src/) | Pages-Vorlage; Platzhalter `@RELEASE@`, `@STAGING@`, `@COMMIT@`, `@DATE@`, `@PROJECT_URL@` ersetzt der `pages`-Job |
+
 Die Skripte verwenden Bash mit `set -euo pipefail` und vier Spaces Einrückung. Bestehende ASCII-Schreibweise in Skriptmeldungen und Kommentaren beibehalten. In die Quellablage gehört nur der C#-Quelltext, keine übersetzte `.exe`.
 
 ## Aktive Pfade und Quellablage
@@ -47,6 +50,14 @@ Der installierte Lutris-Eintrag verweist nicht auf die Projektdateien, sondern d
 Bekannter Fehler im produktiven `update-zwift.sh`: `launcher_is_running` sucht nach `^Name:`, `tasklist` liefert aber `Image Name:`. Dadurch bricht ein echtes Update sofort mit „Launcher wurde vor Abschluss des Updates beendet“ ab. In der Quellablage ist das behoben (Prüfung auf `^PID:`).
 
 Beim Verschieben dieses Projektverzeichnisses müssen die vier absoluten Pfade in `installer[0].execute.args` von `zwift-lutris.yml` sowie die dokumentierten Beispielpfade angepasst werden. Die Wrapper selbst bestimmen ihr Verzeichnis dynamisch.
+
+## CI, Pakete und Pages
+
+- GitLab-Projekt `multimedia/zwift` (ID 110, privat) auf `gitlab.metaccount.de`; Remote per SSH über `git.metaccount.de:10022`.
+- Es gibt nur Linux-Docker-Runner (Tag `docker`). `RunFromProcess.exe` wird im CI deshalb mit Mono `mcs -platform:x64` übersetzt; der Installer übersetzt weiterhin selbst mit `csc.exe` im Präfix und lädt nichts aus dem CI.
+- Release-Tags folgen `release/X.Y.Z`; andere Tags starten keine Pipeline. Push auf `main` überschreibt die Paketversion `staging`.
+- Pages ist pfadbasiert (`https://multimedia.pages.metaccount.de/zwift`, eindeutige Domain abgeschaltet). Der `pages`-Job baut die Seite bei jedem Lauf neu und lädt dazu Staging und das höchste `release/*`-Tag (`sort -V`) aus der Paket-Registry. Releases verlinken auf die Pages-Dateien; dort liegt nur das jeweils neueste Release.
+- Die Pages-Sichtbarkeit lässt sich bei diesem privaten Projekt nicht auf `public` stellen („public access is disabled“).
 
 ## Laufzeitverhalten und Invarianten
 

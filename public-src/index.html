@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zwift unter Lutris/WineHQ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+    <h1>Zwift unter Lutris/WineHQ</h1>
+    <p>Installations-, Update- und Startskripte für die Windows-Version von Zwift mit systemweitem WineHQ. Lutris startet einen Linux-Wrapper, der Installer richtet das Wine-Präfix selbst ein.</p>
+
+    <h2>RunFromProcess.exe</h2>
+    <p>Kleines Hilfsprogramm, das <code>ZwiftApp.exe</code> als Kindprozess des Zwift-Launchers startet. Nur so lädt das Spiel unter Wine und zeigt das Anmeldefenster.</p>
+    <pre>RunFromProcess.exe &lt;ppid&gt; &lt;kommandozeile ...&gt;</pre>
+    <p>Benötigt .NET Framework 4.x im Präfix (winetricks <code>dotnet48</code>). Der Installer übersetzt das Programm auch selbst; die Downloads hier sind für manuelle Installationen gedacht.</p>
+
+    <h3>Aktuelles Release</h3>
+@RELEASE@
+
+    <h3>Staging</h3>
+@STAGING@
+
+    <h2>Voraussetzungen</h2>
+    <ul>
+        <li>Lutris</li>
+        <li>WineHQ mit <code>/usr/bin/wine64</code> und <code>/usr/bin/wineserver</code>, unter Fedora das vollständige Paket <code>wine</code></li>
+        <li><code>curl</code>, <code>sha256sum</code>, <code>cabextract</code>, <code>unzip</code>, <code>ntlm_auth</code>, GNU <code>grep</code></li>
+    </ul>
+
+    <h2>Quelltext</h2>
+    <p><a href="@PROJECT_URL@">@PROJECT_URL@</a> (Anmeldung erforderlich)</p>
+</main>
+<footer>Erstellt aus <code>@COMMIT@</code> am @DATE@</footer>
+</body>
+</html>
